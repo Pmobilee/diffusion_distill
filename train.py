@@ -8,7 +8,7 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed.elastic.multiprocessing import errors
 from functools import partial
-
+import wandb
 
 @errors.record
 def main(args):
@@ -192,16 +192,32 @@ def main(args):
         chkpt_path=chkpt_path,
         image_dir=image_dir,
         use_ddim=args.use_ddim,
-        sample_bsz=args.sample_bsz
+        sample_bsz=args.sample_bsz,
+        session=args.session
     )
 
+def wandb_log(name, lr, tags, notes, project="cvpr_Diffusion"):
+    """
+    Params: wandb name, lr, model, wand tags, wandb notes. Task: returns a wandb session with CIFAR-1000 information,
+    logs: Loss, Generational Loss, hardware specs, model gradients
+    """
+    session = wandb.init(
+    project=project, 
+    name=name, 
+    config={"learning_rate": lr, "architecture": "Diffusion Model","dataset": "Imagenet-1000"}, tags=tags, notes=notes)
+    # session.watch(model, log="all", log_freq=1000)
+    return session
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
 
+
+    
+
+
     parser = ArgumentParser()
-    parser.add_argument("--dataset", choices=["mnist", "cifar10", "celeba"], default="cifar10")
-    parser.add_argument("--root", default="~/datasets", type=str, help="root directory of datasets")
+    parser.add_argument("--dataset", choices=["mnist", "cifar10", "celeba", "lsun"], default="cifar10")
+    parser.add_argument("--root", default="./datasets", type=str, help="root directory of datasets")
     parser.add_argument("--epochs", default=120, type=int, help="total number of training epochs")
     parser.add_argument("--lr", default=0.0002, type=float, help="learning rate")
     parser.add_argument("--beta1", default=0.9, type=float, help="beta_1 in Adam")
@@ -209,15 +225,15 @@ if __name__ == "__main__":
     parser.add_argument("--weight-decay", default=0., type=float,
                         help="decoupled weight_decay factor in Adam")
     parser.add_argument("--batch-size", default=128, type=int)
-    parser.add_argument("--num-accum", default=1, type=int, help=(
+    parser.add_argument("--num-accum", default=10, type=int, help=(
         "number of batches before weight update, a.k.a. gradient accumulation"))
-    parser.add_argument("--train-timesteps", default=0, type=int, help=(
+    parser.add_argument("--train-timesteps", default=128, type=int, help=(
         "number of diffusion steps for training (0 indicates continuous training)"))
-    parser.add_argument("--sample-timesteps", default=256, type=int, help="number of diffusion steps for sampling")
+    parser.add_argument("--sample-timesteps", default=128, type=int, help="number of diffusion steps for sampling")
     parser.add_argument("--logsnr-schedule", choices=["linear", "sigmoid", "cosine", "legacy"], default="cosine")
     parser.add_argument("--logsnr-max", default=20., type=float)
     parser.add_argument("--logsnr-min", default=-20., type=float)
-    parser.add_argument("--model-out-type", choices=["x_0", "eps", "both", "v"], default="both", type=str)
+    parser.add_argument("--model-out-type", choices=["x_0", "eps", "both", "v"], default="v", type=str)
     parser.add_argument("--model-var-type", choices=["fixed_small", "fixed_large", "fixed_medium"], default="fixed_large", type=str)
     parser.add_argument("--reweight-type", choices=["constant", "snr", "truncated_snr", "alpha2"], default="truncated_snr", type=str)
     parser.add_argument("--loss-type", choices=["kl", "mse"], default="mse", type=str)
@@ -229,13 +245,13 @@ if __name__ == "__main__":
     parser.add_argument("--train-device", default="cuda:0", type=str)
     parser.add_argument("--eval-device", default="cuda:0", type=str)
     parser.add_argument("--image-dir", default="./images/train", type=str)
-    parser.add_argument("--image-intv", default=10, type=int)
-    parser.add_argument("--num-save-images", default=64, type=int, help="number of images to generate & save")
+    parser.add_argument("--image-intv", default=1, type=int)
+    parser.add_argument("--num-save-images", default=5, type=int, help="number of images to generate & save")
     parser.add_argument("--sample-bsz", default=-1, type=int, help="batch size for sampling")
     parser.add_argument("--config-dir", default="./configs", type=str)
     parser.add_argument("--chkpt-dir", default="./chkpts", type=str)
     parser.add_argument("--chkpt-name", default="", type=str)
-    parser.add_argument("--chkpt-intv", default=120, type=int, help="frequency of saving a checkpoint")
+    parser.add_argument("--chkpt-intv", default=1, type=int, help="frequency of saving a checkpoint")
     parser.add_argument("--seed", default=1234, type=int, help="random seed")
     parser.add_argument("--resume", action="store_true", help="to resume training from a checkpoint")
     parser.add_argument("--eval", action="store_true", help="whether to evaluate fid during training")
@@ -244,4 +260,9 @@ if __name__ == "__main__":
     parser.add_argument("--ema-decay", default=0.9999, type=float, help="decay factor of ema")
     parser.add_argument("--distributed", action="store_true", help="whether to use distributed training")
 
-    main(parser.parse_args())
+    args = parser.parse_args()
+
+    session = wandb_log(name=f"{args.dataset}_train_distill", lr=args.lr, tags=["train_distill", args.dataset], notes="", project="train_distill")
+    # session =None
+    args.session = session
+    main(args)

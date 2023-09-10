@@ -23,7 +23,7 @@ class CelebA(datasets.VisionDataset):
             self,
             root,
             split,
-            download=False,
+            download=True,
             transform=transforms.ToTensor(),
             target_transform=None
     ):
@@ -123,6 +123,22 @@ DATA_INFO = {
         "train_size": 50000,
         "test_size": 10000
     },
+    "lsun": {
+    "data": datasets.LSUN,
+    "classes": ["church_outdoor_train"], # or 1 if you're using a specific class, or another number if you're using a different subset
+    "resolution": (64, 64), # or whatever you choose
+    "channels": 3,
+    "transform": transforms.Compose([
+        transforms.Resize((64, 64)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ]),
+    "target_transform": lambda y: y, # this could be different depending on your task
+    "train_size": 1000000, # this could be different depending on your dataset split
+    "test_size": 10000  # this could be different depending on your dataset split
+    # "train_size": 50000, # this could be different depending on your dataset split
+    # "test_size": 10000  # this could be different depending on your dataset split
+},
     "celeba": {
         "data": CelebA,
         "num_classes": 40,
@@ -189,7 +205,7 @@ def get_dataloader(
     target_transform = DATA_INFO[dataset].get("target_transform", None)
     data_configs = {
         "root": root,
-        "download": False,
+        "download": True,
         "transform": transform,
         "target_transform": target_transform
     }
@@ -203,6 +219,8 @@ def get_dataloader(
     }
     if dataset == "celeba":
         data = DATA_INFO[dataset]["data"](root=root, split=split, transform=transform)
+    if dataset == "lsun":
+        data = DATA_INFO[dataset]["data"](root=root,transform=transform)
     else:
         if split == "test":
             data = DATA_INFO[dataset]["data"](train=False, **data_configs)

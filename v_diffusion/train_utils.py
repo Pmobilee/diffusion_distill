@@ -3,13 +3,16 @@ import re
 import torch
 import torch.nn as nn
 from torch.nn.parallel import DistributedDataParallel
-from .utils import save_image, EMA
+from .utils import save_image, EMA, wandb_image
 from .metrics.fid_score import InceptionStatistics, get_precomputed, calc_fd
 from tqdm import tqdm
 from contextlib import nullcontext
 from torch.utils.data.distributed import DistributedSampler
 import torch.distributed as dist
-
+from torchvision.utils import make_grid
+import wandb
+from PIL import Image
+import numpy as np
 
 class DummyScheduler:
     @staticmethod
@@ -127,7 +130,7 @@ class Trainer:
         assert loss.shape == (B, )
         return loss
 
-    def step(self, x, y, update=True):
+    def step(self, x, y, update=True, session=None, i=0):
         B = x.shape[0]
         loss = self.loss(x, y).mean()
         loss.div(self.num_accum).backward()
@@ -141,6 +144,9 @@ class Trainer:
             if self.is_main and self.use_ema:
                 self.ema.update()
         self.stats.update(B, loss=loss.item() * B)
+        
+        
+        return loss.item()
 
     def sample_fn(
             self, noises, labels,
@@ -203,7 +209,8 @@ class Trainer:
             chkpt_path=None,
             image_dir=None,
             use_ddim=False,
-            sample_bsz=-1
+            sample_bsz=-1,
+            session=None
     ):
 
         if self.is_main and self.num_save_images:
@@ -228,13 +235,19 @@ class Trainer:
                     total_batches += 1
                     if not self.use_cfg:
                         y = None
-                    self.step(
+                    loss = self.step(
                         x.to(self.device),
                         y.float().to(self.device)
                         if y is not None else y,
-                        update=total_batches % self.num_accum == 0
+                        update=total_batches % self.num_accum == 0, session=session, i=i
                     )
+                    
+                    
+                        
                     t.set_postfix(self.current_stats)
+                    if session != None and i % 100 == 0:
+                            
+                            session.log({"loss": self.current_stats["loss"]})
                     if i == len(self.trainloader) - 1:
                         self.model.eval()
                         if evaluator is not None:
@@ -245,11 +258,14 @@ class Trainer:
                         results.update(self.current_stats)
                         results.update(eval_results)
                         t.set_postfix(results)
+                        
+                        
             if self.is_main:
                 if not (e + 1) % self.image_intv and self.num_save_images and image_dir:
                     x = self.sample_fn(
                         noises, labels, use_ddim=use_ddim, batch_size=sample_bsz)
-                    save_image(x, os.path.join(image_dir, f"{e+1}.jpg"))
+                    wandb_image(x)
+                    save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
                 if not (e + 1) % self.chkpt_intv and chkpt_path:
                     self.save_checkpoint(chkpt_path, epoch=e+1, **results)
             if self.distributed:

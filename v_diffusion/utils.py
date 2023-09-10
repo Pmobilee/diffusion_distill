@@ -6,7 +6,9 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import weakref
-
+import wandb
+from torchvision.utils import make_grid
+from PIL import Image
 mpl.rcParams["figure.dpi"] = 144
 
 
@@ -25,10 +27,24 @@ def dict2str(d):
     return out_str
 
 
-def save_image(x, path, nrow=8, normalize=True, value_range=(-1., 1.)):
+def save_image(x, path, nrow=8, normalize=True, value_range=(-1., 1.), session=None):
     img = make_grid(x, nrow=nrow, normalize=normalize, value_range=value_range)
     img = img.permute(1, 2, 0)
     _ = plt.imsave(path, img.numpy())
+    if session != None:
+        session.log({"sample": _})
+
+def wandb_image(x):
+    img = make_grid(x, nrow=1, normalize=True, value_range=(-1., 1.))
+    img = img.permute(1, 2, 0).cpu().numpy()
+    # Convert the image data to uint8 format and scale it to [0, 255]
+    img = ((img + 1) * 0.5 * 255).astype(np.uint8)
+    # Create a PIL Image object
+    img_pil = Image.fromarray(img)
+    wandb_img = wandb.Image(img_pil)
+    # Log the image to wandb
+    wandb.log({"sample": wandb_img})
+
 
 
 def seed_all(seed):
