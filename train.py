@@ -106,6 +106,7 @@ def main(args):
         model = _model.to(train_device)
 
     optimizer = AdamW(model.parameters(), lr=lr, betas=(beta1, beta2), weight_decay=weight_decay)
+    distill_optimizer = AdamW(model.parameters(), lr=lr*0.1, betas=(beta1, beta2), weight_decay=weight_decay)
     # Note1: lr_lambda is used to calculate the **multiplicative factor**
     # Note2: index starts at 0
     scheduler = lr_scheduler.LambdaLR(
@@ -151,6 +152,7 @@ def main(args):
     trainer = Trainer(
         model=model,
         optimizer=optimizer,
+        distill_optimizer=distill_optimizer,
         diffusion=diffusion,
         timesteps=train_timesteps,
         epochs=epochs,

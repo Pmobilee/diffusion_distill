@@ -64,6 +64,7 @@ class Trainer:
             self,
             model,
             optimizer,
+            distill_optimizer,
             diffusion,
             timesteps,
             epochs,
@@ -84,6 +85,7 @@ class Trainer:
             rank=0  # process id for distributed training
     ):
         self.model = model
+        self.distill_optimizer = distill_optimizer
         self.optimizer = optimizer
         self.diffusion = diffusion
         self.timesteps = timesteps
@@ -252,10 +254,11 @@ class Trainer:
                             # loss.div(self.num_accum).backward()
 
                             nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.grad_norm)
-                            self.optimizer.step()
-                            self.optimizer.zero_grad(set_to_none=True)
-                            if self.is_main and self.use_ema:
-                                self.ema.update()
+                            self.distill_optimizer.step()
+                            self.distill_optimizer.zero_grad(set_to_none=True)
+                            session.log({"distill_loss": loss.item()})
+                            # if self.is_main and self.use_ema:
+                            #     self.ema.update()
                         
                     else:
                         loss = self.step(
