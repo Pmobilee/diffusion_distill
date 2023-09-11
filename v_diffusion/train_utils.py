@@ -241,13 +241,13 @@ class Trainer:
                     if not self.use_cfg:
                         y = None
                     if distill_t != None and i > 0 and i % distill_t == 0:
-                        for i in range(1, self.timesteps + 1, 2):
+                        for j in range(1, self.timesteps + 1, 2):
                             loss = self.diffusion.distill(
                                 x.to(self.device),
                                 y.float().to(self.device)
                                 if y is not None else y,
                                 update=total_batches % self.num_accum == 0, session=session, distill_t=distill_t
-                            , denoise_fn = self.model, timesteps=self.timesteps, i=1)
+                            , denoise_fn = self.model, timesteps=self.timesteps, i=j)
                             loss.backward()
                             # loss.div(self.num_accum).backward()
 
@@ -256,7 +256,7 @@ class Trainer:
                             self.optimizer.zero_grad(set_to_none=True)
                             if self.is_main and self.use_ema:
                                 self.ema.update()
-                        continue
+                        
                     else:
                         loss = self.step(
                             x.to(self.device),
@@ -270,7 +270,7 @@ class Trainer:
                     t.set_postfix(self.current_stats)
                     if session != None and i % 100 == 0:
                             
-                            session.log({"loss": self.current_stats["loss"]})
+                        session.log({"loss": self.current_stats["loss"]})
                     if i == len(self.trainloader) - 1:
                         self.model.eval()
                         if evaluator is not None:
