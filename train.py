@@ -193,7 +193,8 @@ def main(args):
         image_dir=image_dir,
         use_ddim=args.use_ddim,
         sample_bsz=args.sample_bsz,
-        session=args.session
+        session=args.session,
+        distill_t=args.distill_t,
     )
 
 def wandb_log(name, lr, tags, notes, project="cvpr_Diffusion"):
@@ -259,7 +260,7 @@ if __name__ == "__main__":
     parser.add_argument("--use-ddim", action="store_true", help="whether to use DDIM sampler")
     parser.add_argument("--ema-decay", default=0.9999, type=float, help="decay factor of ema")
     parser.add_argument("--distributed", action="store_true", help="whether to use distributed training")
-
+    parser.add_argument("--distill-t", type=int, help="interval to perform distillation", default=None)
     args = parser.parse_args()
 
     session = wandb_log(name=f"{args.dataset}_train_distill", lr=args.lr, tags=["train_distill", args.dataset], notes="", project="train_distill")

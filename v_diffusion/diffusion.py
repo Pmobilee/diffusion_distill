@@ -1,6 +1,7 @@
 import math
 import torch
 import torch.nn.functional as F
+import torch.nn as nn
 
 try:
     from .functions import normal_kl, discretized_gaussian_loglik, flat_mean
@@ -413,16 +414,18 @@ class GaussianDiffusion:
             noise = torch.randn_like(x_0)
 
         s = None
+        
         if self.loss_type == "kl":
             t = torch.ceil(t * self.sample_timesteps)
             s = t.sub(1).div(self.sample_timesteps)
             t = t.div(self.sample_timesteps)
-
+        
         # calculate the loss
         # kl: un-weighted
         # mse: re-weighted
 
         logsnr_t, = self.t2logsnr(t, x=x_0)
+        
         x_t = q_sample(x_0, logsnr_t, eps=noise)
         if self.loss_type == "kl":
             losses = self._loss_term_bpd(
@@ -443,6 +446,7 @@ class GaussianDiffusion:
                     torch.rand((y.shape[0],)) > self.p_uncond, y)
 
             model_out = denoise_fn(x_t, t, y=y)
+            
             predict = self.from_model_out_to_pred(
                 x_t, model_out, logsnr_t
             )[self.reweight_type]
@@ -458,6 +462,47 @@ class GaussianDiffusion:
             raise NotImplementedError(self.loss_type)
 
         return losses
+    
+    def distill(self, x, y, update=True, session=None, distill_t = None, denoise_fn=None,timesteps=128, i=1):
+        B = x.shape[0]
+        noise = torch.randn_like(x)
+        mse_loss = nn.MSELoss()
+        current_step = i
+        for i in [1, 2]:
+            t_value = (current_step + i - 1) / 128.0  # Convert to a value between 0 and 1
+            t = torch.full((B,), t_value, dtype=torch.float32, device="cuda:0")
+            logsnr_t, = self.t2logsnr(t, x=x)
+            # print(t, logsnr_t[0])
+            x_t = q_sample(x, logsnr_t, eps=noise)
+            v = denoise_fn(x_t, t, y=y)
+
+            # x_0 = pred_x0_from_v(x_t, v, logsnr_t)
+            # eps = pred_eps_from_v(x_t, v, logsnr_t)
+    
+            if i == 2:
+                loss = (logsnr_t * mse_loss(v_prev, v)).mean()  # Use mean to make it a scalar
+                return loss
+
+            v_prev = v.clone()
+            
+            # x_0_prev = x_0.clone()
+            # eps_prev = eps.clone()
+                
+
+
+            
+        # loss = self.loss(x, y, specified_t=distill_t).mean()
+        # loss.div(self.num_accum).backward()
+        # if update:
+        #     # gradient clipping by global norm
+        #     nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.grad_norm)
+        #     self.optimizer.step()
+        #     self.optimizer.zero_grad(set_to_none=True)
+        #     # adjust learning rate every step (warming up)
+        #     self.scheduler.step()
+        # #     if self.is_main and self.use_ema:
+        # #         self.ema.update()
+        # # self.stats.update(B, loss=loss.item() * B)
 
     def _prior_bpd(self, x_0):
         B = x_0.shape[0]

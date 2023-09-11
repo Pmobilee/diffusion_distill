@@ -117,20 +117,24 @@ class Trainer:
 
         self.stats = RunningStatistics(loss=None)
 
-    def loss(self, x, y):
+    def loss(self, x, y, specified_t=None):
         B = x.shape[0]
         T = self.timesteps
+
+
+        # Generate random t value as before
         if T > 0:
             t = torch.randint(
                 T, size=(B, ), dtype=torch.float32, device=self.device
             ).add(1).div(self.timesteps)
         else:
             t = torch.rand((B, ), dtype=torch.float32, device=self.device)
+    
         loss = self.diffusion.train_losses(self.model, x_0=x, t=t, y=y)
         assert loss.shape == (B, )
         return loss
-
-    def step(self, x, y, update=True, session=None, i=0):
+    
+    def step(self, x, y, update=True, session=None, i=0, distill_t = None):
         B = x.shape[0]
         loss = self.loss(x, y).mean()
         loss.div(self.num_accum).backward()
@@ -210,7 +214,8 @@ class Trainer:
             image_dir=None,
             use_ddim=False,
             sample_bsz=-1,
-            session=None
+            session=None,
+            distill_t=10,
     ):
 
         if self.is_main and self.num_save_images:
@@ -235,14 +240,32 @@ class Trainer:
                     total_batches += 1
                     if not self.use_cfg:
                         y = None
-                    loss = self.step(
-                        x.to(self.device),
-                        y.float().to(self.device)
-                        if y is not None else y,
-                        update=total_batches % self.num_accum == 0, session=session, i=i
-                    )
-                    
-                    
+                    if distill_t != None and i > 0 and i % distill_t == 0:
+                        for i in range(1, self.timesteps + 1, 2):
+                            loss = self.diffusion.distill(
+                                x.to(self.device),
+                                y.float().to(self.device)
+                                if y is not None else y,
+                                update=total_batches % self.num_accum == 0, session=session, distill_t=distill_t
+                            , denoise_fn = self.model, timesteps=self.timesteps, i=1)
+                            loss.backward()
+                            # loss.div(self.num_accum).backward()
+
+                            nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.grad_norm)
+                            self.optimizer.step()
+                            self.optimizer.zero_grad(set_to_none=True)
+                            if self.is_main and self.use_ema:
+                                self.ema.update()
+                        continue
+                    else:
+                        loss = self.step(
+                            x.to(self.device),
+                            y.float().to(self.device)
+                            if y is not None else y,
+                            update=total_batches % self.num_accum == 0, session=session, i=i
+                        )
+                        
+                        
                         
                     t.set_postfix(self.current_stats)
                     if session != None and i % 100 == 0:

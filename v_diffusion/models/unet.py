@@ -253,6 +253,7 @@ class UNet(nn.Module):
         # downsample
         hs = [self.in_conv(x)]
         for i in range(self.levels):
+            
             downsample = self.downsamples[f"level_{i}"]
             for j, layer in enumerate(downsample):
                 h = hs[-1]
@@ -276,6 +277,7 @@ class UNet(nn.Module):
                     h = layer(h)
 
         h = self.out_conv(h)
+   
         return h
 
 
