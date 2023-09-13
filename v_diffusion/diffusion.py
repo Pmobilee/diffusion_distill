@@ -390,6 +390,7 @@ class GaussianDiffusion:
         return (output, pred_x_0) if return_pred else output
 
     def from_model_out_to_pred(self, x_t, model_out, logsnr_t):
+        
         assert self.model_out_type in {"x0", "eps", "both", "v"}
         if self.model_out_type == "v":
             v = model_out
@@ -427,6 +428,7 @@ class GaussianDiffusion:
         logsnr_t, = self.t2logsnr(t, x=x_0)
         
         x_t = q_sample(x_0, logsnr_t, eps=noise)
+        
         if self.loss_type == "kl":
             losses = self._loss_term_bpd(
                 denoise_fn, x_0=x_0, x_t=x_t, s=s, t=t, y=y,
@@ -446,7 +448,6 @@ class GaussianDiffusion:
                     torch.rand((y.shape[0],)) > self.p_uncond, y)
 
             model_out = denoise_fn(x_t, t, y=y)
-            
             predict = self.from_model_out_to_pred(
                 x_t, model_out, logsnr_t
             )[self.reweight_type]
@@ -463,27 +464,67 @@ class GaussianDiffusion:
 
         return losses
     
-    def distill(self, x, y, update=True, session=None, distill_t = None, denoise_fn=None,timesteps=128, i=1):
-        B = x.shape[0]
-        noise = torch.randn_like(x)
+    def distill(self, x_0, y, update=True, session=None, distill_t = None, denoise_fn=None,timesteps=128, i=1):
+        B = x_0.shape[0]
+        noise = torch.randn_like(x_0)
         mse_loss = nn.MSELoss()
         current_step = i
+       
         for i in [1, 2]:
-            t_value = (current_step + i - 1) / 128.0  # Convert to a value between 0 and 1
+            t_value = (current_step + i - 1) / 128  # Convert to a value between 0 and 1
+          
             t = torch.full((B,), t_value, dtype=torch.float32, device="cuda:0")
-            logsnr_t, = self.t2logsnr(t, x=x)
+      
+            logsnr_t, = self.t2logsnr(t, x=x_0)
+        
             # print(t, logsnr_t[0])
-            x_t = q_sample(x, logsnr_t, eps=noise)
-            v = denoise_fn(x_t, t, y=y)
+            x_t = q_sample(x_0, logsnr_t, eps=noise)
+            # model_out = denoise_fn(x_t, t, y=y)
+            
+            # x_0 = pred_x0_from_v(x_t, model_out, logsnr_t)
+            # eps = pred_eps_from_v(x_t, model_out, logsnr_t)
 
-            # x_0 = pred_x0_from_v(x_t, v, logsnr_t)
-            # eps = pred_eps_from_v(x_t, v, logsnr_t)
-    
+            assert self.model_var_type != "learned"
+            assert self.reweight_type in {"constant", "snr", "truncated_snr", "alpha2"}
+            target = {
+                "constant": x_0,
+                "snr": noise,
+                "truncated_snr": (x_0, noise),
+                "alpha2": pred_v_from_x0eps(x_0, noise, logsnr_t)
+            }[self.reweight_type]
+
+            if self.p_uncond and y is not None:
+                y *= broadcast_to(
+                    torch.rand((y.shape[0],)) > self.p_uncond, y)
+
+            model_out = denoise_fn(x_t, t, y=y)
+            
+            predict = self.from_model_out_to_pred(
+                x_t, model_out, logsnr_t
+            )[self.reweight_type]
+
+           
             if i == 2:
-                loss = (logsnr_t * mse_loss(v_prev, v)).mean()  # Use mean to make it a scalar
+                # loss = (logsnr_t * mse_loss(v_prev, v)).mean()  # Use mean to make it a scalar
+                # loss = mse_loss(v_prev, v).mean() 
+                # losses = torch.maximum(*[
+                #     flat_mean((tgt - pred).pow(2))
+                #     for tgt, pred in zip(predict, predict_prev)])
+                # return loss
+                if isinstance(target, tuple):
+                    assert len(target) == 2
+                    losses = torch.maximum(*[
+                        flat_mean((tgt - pred).pow(2))
+                        for tgt, pred in zip(predict, predict_prev)])
+                    loss = losses.mean()
+                else:
+                    losses = flat_mean((predict, predict_prev).pow(2))
+                    loss = losses.mean()
+          
                 return loss
 
-            v_prev = v.clone()
+            predict_prev = (predict[0].clone().detach(), predict[1].clone().detach())
+            # predict
             
             # x_0_prev = x_0.clone()
             # eps_prev = eps.clone()

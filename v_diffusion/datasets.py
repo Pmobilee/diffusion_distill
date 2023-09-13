@@ -125,11 +125,11 @@ DATA_INFO = {
     },
     "lsun": {
     "data": datasets.LSUN,
-    "classes": ["church_outdoor_train"], # or 1 if you're using a specific class, or another number if you're using a different subset
-    "resolution": (64, 64), # or whatever you choose
+    "classes": "church_outdoor_train", # or 1 if you're using a specific class, or another number if you're using a different subset
+    "resolution": (32, 32), # or whatever you choose
     "channels": 3,
     "transform": transforms.Compose([
-        transforms.Resize((64, 64)),
+        transforms.Resize((32, 32)),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ]),
@@ -220,7 +220,8 @@ def get_dataloader(
     if dataset == "celeba":
         data = DATA_INFO[dataset]["data"](root=root, split=split, transform=transform)
     if dataset == "lsun":
-        data = DATA_INFO[dataset]["data"](root=root,transform=transform)
+      
+        data = DATA_INFO[dataset]["data"](root=root,transform=transform, classes=['church_outdoor_train'])
     else:
         if split == "test":
             data = DATA_INFO[dataset]["data"](train=False, **data_configs)
