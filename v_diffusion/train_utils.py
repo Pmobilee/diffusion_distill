@@ -292,7 +292,7 @@ class Trainer:
                         session.log({"combined_loss": combined_loss})
                         session.log({"train_loss": train_loss})
                         session.log({"distill_loss": distill_loss})
-                    if session != None and i > 0 and i % 1 == 0:
+                    if session != None and i > 0 and i % 1000 == 0:
                         x = self.sample_fn(
                         noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz)
                         wandb_image(x)
