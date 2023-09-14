@@ -119,7 +119,20 @@ class Trainer:
 
         self.stats = RunningStatistics(loss=None)
 
-    def loss(self, x, y, specified_t=None):
+    def loss(self, x, y):
+        B = x.shape[0]
+        T = self.timesteps
+        if T > 0:
+            t = torch.randint(
+                T, size=(B, ), dtype=torch.float32, device=self.device
+            ).add(1).div(self.timesteps)
+        else:
+            t = torch.rand((B, ), dtype=torch.float32, device=self.device)
+        loss = self.diffusion.train_losses(self.model, x_0=x, t=t, y=y)
+        assert loss.shape == (B, )
+        return loss
+    
+    def train_distill_loss(self, x, y, specified_t=None):
         B = x.shape[0]
         T = self.timesteps
 
@@ -165,7 +178,7 @@ class Trainer:
 
     def step_distill(self, x, y, update=True, session=None, i=0, distill_t = None):
         B = x.shape[0]
-        main_loss, distill_loss = self.loss(x, y)
+        main_loss, distill_loss = self.train_distill_loss(x, y)
 
         
         # Combine losses with weights (hyperparameters)
