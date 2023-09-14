@@ -265,9 +265,10 @@ if __name__ == "__main__":
     parser.add_argument("--ema-decay", default=0.9999, type=float, help="decay factor of ema")
     parser.add_argument("--distributed", action="store_true", help="whether to use distributed training")
     parser.add_argument("--distill", action="store_true", help="whether to distillation during training")
+    parser.add_argument("--name", type=str, help="wandb name", default="TD_lsun")
     args = parser.parse_args()
 
-    session = wandb_log(name=f"{args.dataset}_train_distill", lr=args.lr, tags=["train_distill", args.dataset], notes="", project="train_distill")
+    session = wandb_log(name=args.name, lr=args.lr, tags=["train_distill", args.dataset], notes="", project="train_distill")
     # session =None
     args.session = session
     main(args)
