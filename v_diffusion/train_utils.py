@@ -292,9 +292,9 @@ class Trainer:
                         session.log({"combined_loss": combined_loss})
                         session.log({"train_loss": train_loss})
                         session.log({"distill_loss": distill_loss})
-                    if session != None and i > 0 and i % 1000 == 0:
+                    if session != None and i > 0 and i % 400 == 0:
                         x = self.sample_fn(
-                        noises, labels=0, use_ddim=use_ddim, batch_size=1)
+                        noises, labels=0, use_ddim=use_ddim, batch_size=sample_bsz)
                         wandb_image(x)
                         # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
 
@@ -324,9 +324,9 @@ class Trainer:
             if self.is_main:
                 if not (e + 1) % self.image_intv and self.num_save_images and image_dir:
                     x = self.sample_fn(
-                        noises, labels=0, use_ddim=use_ddim, batch_size=1)
+                        noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz)
                     wandb_image(x)
-                    save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
+                    # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
                 if not (e + 1) % self.chkpt_intv and chkpt_path:
                     self.save_checkpoint(chkpt_path, epoch=e+1, **results)
             if self.distributed:
