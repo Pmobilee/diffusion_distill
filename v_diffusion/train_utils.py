@@ -128,7 +128,7 @@ class Trainer:
             ).add(1).div(self.timesteps)
         else:
             t = torch.rand((B, ), dtype=torch.float32, device=self.device)
-        loss = self.diffusion.train_losses(self.model, x_0=x, t=t, y=y)
+        loss, predict = self.diffusion.train_losses(self.model, x_0=x, t=t, y=y)
         assert loss.shape == (B, )
         return loss
     
