@@ -197,7 +197,7 @@ def main(args):
         use_ddim=args.use_ddim,
         sample_bsz=args.sample_bsz,
         session=args.session,
-        distill_t=args.distill_t,
+        distill=args.distill,
         distill_optimizer=distill_optimizer
     )
 
@@ -264,7 +264,7 @@ if __name__ == "__main__":
     parser.add_argument("--use-ddim", action="store_true", help="whether to use DDIM sampler")
     parser.add_argument("--ema-decay", default=0.9999, type=float, help="decay factor of ema")
     parser.add_argument("--distributed", action="store_true", help="whether to use distributed training")
-    parser.add_argument("--distill-t", type=int, help="interval to perform distillation", default=None)
+    parser.add_argument("--distill", action="store_true", help="whether to distillation during training")
     args = parser.parse_args()
 
     session = wandb_log(name=f"{args.dataset}_train_distill", lr=args.lr, tags=["train_distill", args.dataset], notes="", project="train_distill")

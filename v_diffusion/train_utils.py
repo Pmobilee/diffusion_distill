@@ -147,7 +147,23 @@ class Trainer:
         assert main_loss.shape == (B, )
         return main_loss.mean(), distill_loss.mean()
     
-    def step(self, x, y, update=True, session=None, i=0, distill_t = None):
+    def step(self, x, y, update=True):
+        B = x.shape[0]
+        loss = self.loss(x, y).mean()
+        loss.div(self.num_accum).backward()
+        if update:
+            # gradient clipping by global norm
+            nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.grad_norm)
+            self.optimizer.step()
+            self.optimizer.zero_grad(set_to_none=True)
+            # adjust learning rate every step (warming up)
+            self.scheduler.step()
+            if self.is_main and self.use_ema:
+                self.ema.update()
+        self.stats.update(B, loss=loss.item() * B)
+        return loss.item()
+
+    def step_distill(self, x, y, update=True, session=None, i=0, distill_t = None):
         B = x.shape[0]
         main_loss, distill_loss = self.loss(x, y)
 
@@ -236,7 +252,7 @@ class Trainer:
             use_ddim=False,
             sample_bsz=-1,
             session=None,
-            distill_t=10,
+            distill=False,
             distill_optimizer=None,
     ):
 
@@ -264,15 +280,30 @@ class Trainer:
                         y = None
                     
 
-                    
-                    combined_loss, train_loss, distill_loss = self.step(
-                        x.to(self.device),
-                        y.float().to(self.device)
-                        if y is not None else y,
-                        update=total_batches % self.num_accum == 0, session=session, i=i
-                    )
-                    
-                        
+                    if distill:
+                        combined_loss, train_loss, distill_loss = self.step_distill(
+                            x.to(self.device),
+                            y.float().to(self.device)
+                            if y is not None else y,
+                            update=total_batches % self.num_accum == 0, session=session, i=i
+                        )
+
+                        if session != None:
+                            session.log({"process_loss": self.current_stats["loss"]})
+                            session.log({"combined_loss": combined_loss})
+                            session.log({"train_loss": train_loss})
+                            session.log({"distill_loss": distill_loss})
+                    else:
+                        loss = self.step(
+                            x.to(self.device),
+                            y.float().to(self.device)
+                            if y is not None else y,
+                            update=total_batches % self.num_accum == 0
+                            )
+                        if session != None:
+                            session.log({"process_loss": self.current_stats["loss"]})
+                            session.log({"train_loss": loss})
+                           
                         
                     t.set_postfix(self.current_stats)
                     
@@ -287,11 +318,7 @@ class Trainer:
                         results.update(eval_results)
                         t.set_postfix(results)
 
-                    if session != None:
-                        session.log({"process_loss": self.current_stats["loss"]})
-                        session.log({"combined_loss": combined_loss})
-                        session.log({"train_loss": train_loss})
-                        session.log({"distill_loss": distill_loss})
+                    
                     if session != None and i > 0 and i % 1000 == 0:
                         x = self.sample_fn(
                         noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz)
