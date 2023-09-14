@@ -185,7 +185,8 @@ class Trainer:
         alpha = 0.9  # weight for main loss
         beta = 0.1  # weight for distillation loss
         
-        loss = alpha * main_loss + beta * distill_loss
+        # loss = alpha * main_loss + beta * distill_loss
+        loss = main_loss
         
         loss.div(self.num_accum).backward()
         if update:
