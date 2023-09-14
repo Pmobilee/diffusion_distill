@@ -252,7 +252,7 @@ if __name__ == "__main__":
     parser.add_argument("--image-dir", default="./images/train", type=str)
     parser.add_argument("--image-intv", default=1, type=int)
     parser.add_argument("--num-save-images", default=5, type=int, help="number of images to generate & save")
-    parser.add_argument("--sample-bsz", default=-5, type=int, help="batch size for sampling")
+    parser.add_argument("--sample-bsz", default=5, type=int, help="batch size for sampling")
     parser.add_argument("--config-dir", default="./configs", type=str)
     parser.add_argument("--chkpt-dir", default="./chkpts", type=str)
     parser.add_argument("--chkpt-name", default="", type=str)
