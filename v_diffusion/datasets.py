@@ -125,6 +125,7 @@ DATA_INFO = {
     },
     "lsun": {
     "data": datasets.LSUN,
+    "num_classes":1,
     "classes": "church_outdoor_train", # or 1 if you're using a specific class, or another number if you're using a different subset
     "resolution": (32, 32), # or whatever you choose
     "channels": 3,
