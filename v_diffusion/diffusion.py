@@ -462,8 +462,67 @@ class GaussianDiffusion:
         else:
             raise NotImplementedError(self.loss_type)
 
-        return losses
+        return losses, predict
     
+    
+    def distill_loss(self, x_0,  t, y, update=True, session=None, distill_t = None, denoise_fn=None,timesteps=128, i=1, predict=None):
+        with torch.no_grad():
+            B = x_0.shape[0]
+            noise = torch.randn_like(x_0)
+            # i = 0
+            # t_values = t
+            # # for t in t_values:
+            # i += 1
+            logsnr_t, = self.t2logsnr(t, x=x_0)
+        
+            # print(t, logsnr_t[0])
+            x_t = q_sample(x_0, logsnr_t, eps=noise)
+            # model_out = denoise_fn(x_t, t, y=y)
+            
+            # x_0 = pred_x0_from_v(x_t, model_out, logsnr_t)
+            # eps = pred_eps_from_v(x_t, model_out, logsnr_t)
+
+            assert self.model_var_type != "learned"
+            assert self.reweight_type in {"constant", "snr", "truncated_snr", "alpha2"}
+            target = {
+                "constant": x_0,
+                "snr": noise,
+                "truncated_snr": (x_0, noise),
+                "alpha2": pred_v_from_x0eps(x_0, noise, logsnr_t)
+            }[self.reweight_type]
+
+            if self.p_uncond and y is not None:
+                y *= broadcast_to(
+                    torch.rand((y.shape[0],)) > self.p_uncond, y)
+
+            model_out = denoise_fn(x_t, t, y=y)
+            
+            predict_t1 = self.from_model_out_to_pred(
+                x_t, model_out, logsnr_t
+            )[self.reweight_type]
+
+        
+            # if i == 2:
+            # loss = (logsnr_t * mse_loss(v_prev, v)).mean()  # Use mean to make it a scalar
+            # loss = mse_loss(v_prev, v).mean() 
+            # losses = torch.maximum(*[
+            #     flat_mean((tgt - pred).pow(2))
+            #     for tgt, pred in zip(predict, predict_prev)])
+            # return loss
+            if isinstance(predict_t1, tuple):
+                assert len(predict_t1) == 2
+                losses = torch.maximum(*[
+                    flat_mean((tgt - pred).pow(2))
+                    for tgt, pred in zip(predict, predict_t1)])
+                loss = losses.mean()
+            else:
+                losses = flat_mean((predict, predict_t1).pow(2))
+                loss = losses.mean()
+    
+            return loss
+
+                # predict_prev = (predict[0].clone().detach(), predict[1].clone().detach())
+            # predict
     def distill(self, x_0, y, update=True, session=None, distill_t = None, denoise_fn=None,timesteps=128, i=1):
         B = x_0.shape[0]
         noise = torch.randn_like(x_0)

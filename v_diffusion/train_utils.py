@@ -123,23 +123,41 @@ class Trainer:
         B = x.shape[0]
         T = self.timesteps
 
-
-        # Generate random t value as before
         if T > 0:
-            t = torch.randint(
-                T, size=(B, ), dtype=torch.float32, device=self.device
-            ).add(1).div(self.timesteps)
+            t_raw = torch.randint(T-1, size=(B,), dtype=torch.float32, device=self.device).add(1)
+    
+            # The related t_raw_incremented is just t_raw + 1
+            t_raw_incremented = t_raw.add(1)
+            # print(t_raw)
+            # print(t_raw_incremented)
+            # Then divide both by self.timesteps to get them into the original scale
+            t = t_raw.div(self.timesteps)
+            t_incremented = t_raw_incremented.div(self.timesteps)
+     
+            
         else:
             t = torch.rand((B, ), dtype=torch.float32, device=self.device)
-    
-        loss = self.diffusion.train_losses(self.model, x_0=x, t=t, y=y)
+            t_incremented = None  # You can choose to handle this differently if needed
+
+            
+        main_loss, predict = self.diffusion.train_losses(self.model, x_0=x, t=t, y=y)
+        distill_loss = self.diffusion.distill_loss(x_0=x, t=t_incremented, y=y, denoise_fn=self.model, predict=predict)
         
-        assert loss.shape == (B, )
-        return loss
+        
+        assert main_loss.shape == (B, )
+        return main_loss.mean(), distill_loss.mean()
     
     def step(self, x, y, update=True, session=None, i=0, distill_t = None):
         B = x.shape[0]
-        loss = self.loss(x, y).mean()
+        main_loss, distill_loss = self.loss(x, y)
+
+        
+        # Combine losses with weights (hyperparameters)
+        alpha = 0.9  # weight for main loss
+        beta = 0.1  # weight for distillation loss
+        
+        loss = alpha * main_loss + beta * distill_loss
+        
         loss.div(self.num_accum).backward()
         if update:
             # gradient clipping by global norm
@@ -153,7 +171,7 @@ class Trainer:
         self.stats.update(B, loss=loss.item() * B)
         
         
-        return loss.item()
+        return loss.item(), main_loss.item(), distill_loss.item()
 
     def sample_fn(
             self, noises, labels,
@@ -247,7 +265,7 @@ class Trainer:
                     
 
                     
-                    loss = self.step(
+                    combined_loss, train_loss, distill_loss = self.step(
                         x.to(self.device),
                         y.float().to(self.device)
                         if y is not None else y,
@@ -257,9 +275,7 @@ class Trainer:
                         
                         
                     t.set_postfix(self.current_stats)
-                    if session != None and i % 100 == 0:
-                            
-                        session.log({"loss": self.current_stats["loss"]})
+                    
                     if i == len(self.trainloader) - 1:
                         self.model.eval()
                         if evaluator is not None:
@@ -271,24 +287,38 @@ class Trainer:
                         results.update(eval_results)
                         t.set_postfix(results)
 
-                    if distill_t != None and i > 100 and i % distill_t == 0:
-                        for j in range(1, self.timesteps + 1, 2):
-                            loss = self.diffusion.distill(
-                                x.to(self.device),
-                                y.float().to(self.device)
-                                if y is not None else y,
-                                update=total_batches % self.num_accum == 0, session=session, distill_t=distill_t
-                            , denoise_fn = self.model, timesteps=self.timesteps, i=j)
-                            loss.backward()
-                            # loss.div(self.num_accum).backward()
+                    if session != None:
+                        session.log({"process_loss": self.current_stats["loss"]})
+                        session.log({"combined_loss": combined_loss})
+                        session.log({"train_loss": train_loss})
+                        session.log({"distill_loss": distill_loss})
+                    if i > 0 and i % 1000 == 0:
+                        x = self.sample_fn(
+                        noises, labels, use_ddim=use_ddim, batch_size=1)
+                        wandb_image(x)
+                        save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
 
-                            nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.grad_norm)
-                            self.distill_optimizer.step()
-                            self.distill_optimizer.zero_grad(set_to_none=True)
-                            if session != None:
-                                session.log({"distill_loss": loss.item()})
-                            # if self.is_main and self.use_ema:
-                            #     self.ema.update()
+                    # if session != None and i % 100 == 0:
+                            
+                        
+                    # if distill_t != None and i > 100 and i % distill_t == 0:
+                    #     for j in range(1, self.timesteps + 1, 2):
+                    #         loss = self.diffusion.distill(
+                    #             x.to(self.device),
+                    #             y.float().to(self.device)
+                    #             if y is not None else y,
+                    #             update=total_batches % self.num_accum == 0, session=session, distill_t=distill_t
+                    #         , denoise_fn = self.model, timesteps=self.timesteps, i=j)
+                    #         loss.backward()
+                    #         # loss.div(self.num_accum).backward()
+
+                    #         nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.grad_norm)
+                    #         self.distill_optimizer.step()
+                    #         self.distill_optimizer.zero_grad(set_to_none=True)
+                    #         if session != None:
+                    #             session.log({"distill_loss": loss.item()})
+                    #         # if self.is_main and self.use_ema:
+                    #         #     self.ema.update()
                         
                         
             if self.is_main:
