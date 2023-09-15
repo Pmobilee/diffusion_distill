@@ -337,7 +337,7 @@ class Trainer:
                         results.update(self.current_stats)
                         results.update(eval_results)
                         t.set_postfix(results)
-
+                    print("1")
                     
                     if session != None and i > 0 and i % 2 == 0:
                         # x = self.sample_fn(
@@ -347,9 +347,11 @@ class Trainer:
                         # noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=int(timesteps / 2))
                         # wandb_image(x, f"{int(timesteps / 2)}")
                         # # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
-
                         
+
+                        print("2")
                         if evaluator is not None:
+                            print("3")
                             self.model.eval()
                             eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels)
                             session.log({"fid": fid})
