@@ -270,6 +270,7 @@ class Trainer:
             session=None,
             distill=False,
             distill_optimizer=None,
+            timesteps=128
     ):
 
         if self.is_main and self.num_save_images:
@@ -337,10 +338,10 @@ class Trainer:
                     
                     if session != None and i > 0 and i % 1000 == 0:
                         x = self.sample_fn(
-                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=self.sample_timesteps)
+                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=timesteps)
                         wandb_image(x, f"{self.sample_timesteps}")
                         x = self.sample_fn(
-                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=self.sample_timesteps / 2)
+                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=int(timesteps / 2))
                         wandb_image(x, f"{int(self.sample_timesteps / 2)}")
                         # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
 
@@ -373,10 +374,10 @@ class Trainer:
                     #     noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz)
                     if session != None:
                         x = self.sample_fn(
-                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=self.sample_timesteps)
+                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=timesteps)
                         wandb_image(x, f"{self.sample_timesteps}")
                         x = self.sample_fn(
-                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=self.sample_timesteps / 2)
+                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=int(self.timesteps / 2))
                         wandb_image(x, f"{int(self.sample_timesteps / 2)}")
                     # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
                 if not (e + 1) % self.chkpt_intv and chkpt_path:

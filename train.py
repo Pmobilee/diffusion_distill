@@ -199,6 +199,7 @@ def main(args):
         session=args.session,
         distill=args.distill,
         distill_optimizer=distill_optimizer
+        timesteps=train_timesteps
     )
 
 def wandb_log(name, lr, tags, notes, project="cvpr_Diffusion"):
