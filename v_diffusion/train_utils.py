@@ -458,7 +458,7 @@ class Evaluator:
             dataset,
             diffusion=None,
             eval_batch_size=256,
-            max_eval_count=10000,
+            max_eval_count=1000,
             device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ):
         self.diffusion = diffusion
