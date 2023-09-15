@@ -140,7 +140,7 @@ DATA_INFO = {
     # "train_size": 50000, # this could be different depending on your dataset split
     # "test_size": 10000  # this could be different depending on your dataset split
 },
-"lsun-bedroom": {
+"lsun_bedroom": {
     "data": datasets.LSUN,
     "num_classes": 1,
     "classes": "bedroom_train", # or 1 if you're using a specific class, or another number if you're using a different subset
