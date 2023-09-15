@@ -219,11 +219,12 @@ class Trainer:
             else:
                 sample = []
                 for i in range(0, noises.shape[0], batch_size):
+                    print("no ema, timesteps:", timesteps)
                     _slice = slice(i, i+batch_size)
                     _shape = (min(noises.shape[0] - i, batch_size), ) + tuple(shape[1:])
                     sample.append(diffusion.p_sample(
                         denoise_fn=self.model, shape=_shape, device=self.device,
-                        noise=noises[_slice], label=labels[_slice], use_ddim=use_ddim))
+                        noise=noises[_slice], label=labels[_slice], use_ddim=use_ddim, timesteps=timesteps))
                 sample = torch.cat(sample, dim=0)
         assert sample.grad is None
         return sample
