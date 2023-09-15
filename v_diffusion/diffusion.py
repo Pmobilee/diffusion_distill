@@ -305,9 +305,9 @@ class GaussianDiffusion:
 
     def p_sample_step(
             self, denoise_fn, x_t, step, y,
-            clip_denoised=True, return_pred=False, use_ddim=False):
-        s, t = step.div(self.sample_timesteps), \
-               step.add(1).div(self.sample_timesteps)
+            clip_denoised=True, return_pred=False, use_ddim=False, timesteps=128):
+        s, t = step.div(timesteps), \
+               step.add(1).div(timesteps)
         cond = broadcast_to(step > 0, x_t, dtype=torch.bool)
         model_mean, model_logvar, pred_x_0 = self.p_mean_var(
             denoise_fn, x_t, s, t, y,
@@ -329,7 +329,7 @@ class GaussianDiffusion:
     @torch.inference_mode()
     def p_sample(
             self, denoise_fn, shape,
-            noise=None, label=None, device="cpu", use_ddim=False):
+            noise=None, label=None, device="cpu", use_ddim=False, timesteps=128):
         B = shape[0]
         t = torch.empty((B,), device=device)
         if noise is None:
@@ -338,7 +338,7 @@ class GaussianDiffusion:
             x_t = noise.to(device)
         if label is not None:
             label = label.to(device)
-        for ti in reversed(range(self.sample_timesteps)):
+        for ti in reversed(range(timesteps)):
             t.fill_(ti)
             x_t = self.p_sample_step(
                 denoise_fn, x_t, step=t, y=label, use_ddim=use_ddim)
