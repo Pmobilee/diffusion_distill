@@ -141,7 +141,7 @@ def main(args):
         name = "dist"
     else:
         name = "nodist"
-        
+
     chkpt_path = os.path.join(chkpt_dir, args.chkpt_name or f"{args.dataset}_{args.train_timesteps}_{name}.pt")
     chkpt_intv = args.chkpt_intv
     logger(f"Checkpoint will be saved to {os.path.abspath(chkpt_path)}", end=" ")
@@ -227,7 +227,7 @@ if __name__ == "__main__":
 
 
     parser = ArgumentParser()
-    parser.add_argument("--dataset", choices=["mnist", "cifar10", "celeba", "lsun"], default="cifar10")
+    parser.add_argument("--dataset", choices=["mnist", "cifar10", "celeba", "lsun", "lsun-bedroom"], default="cifar10")
     parser.add_argument("--root", default="./datasets", type=str, help="root directory of datasets")
     parser.add_argument("--epochs", default=120, type=int, help="total number of training epochs")
     parser.add_argument("--lr", default=0.0002, type=float, help="learning rate")

@@ -135,7 +135,24 @@ DATA_INFO = {
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ]),
     "target_transform": lambda y: y, # this could be different depending on your task
-    "train_size": 1000000, # this could be different depending on your dataset split
+    "train_size": 100000, # this could be different depending on your dataset split
+    "test_size": 10000  # this could be different depending on your dataset split
+    # "train_size": 50000, # this could be different depending on your dataset split
+    # "test_size": 10000  # this could be different depending on your dataset split
+},
+"lsun-bedroom": {
+    "data": datasets.LSUN_BEDROOM,
+    "num_classes": 1,
+    "classes": "bedroom_train", # or 1 if you're using a specific class, or another number if you're using a different subset
+    "resolution": (128, 128), # or whatever you choose
+    "channels": 3,
+    "transform": transforms.Compose([
+        transforms.Resize((128, 128)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ]),
+    "target_transform": lambda y: y, # this could be different depending on your task
+    "train_size": 3000000, # this could be different depending on your dataset split
     "test_size": 10000  # this could be different depending on your dataset split
     # "train_size": 50000, # this could be different depending on your dataset split
     # "test_size": 10000  # this could be different depending on your dataset split
@@ -206,7 +223,7 @@ def get_dataloader(
     target_transform = DATA_INFO[dataset].get("target_transform", None)
     data_configs = {
         "root": root,
-        "download": True,
+        "download": False,
         "transform": transform,
         "target_transform": target_transform
     }
@@ -223,6 +240,9 @@ def get_dataloader(
     if dataset == "lsun":
       
         data = DATA_INFO[dataset]["data"](root=root,transform=transform, classes=['church_outdoor_train'])
+    if dataset == "lsun-bedroom":
+      
+        data = DATA_INFO[dataset]["data"](root=root,transform=transform, classes=['lsun_bedroom_train'])
     else:
         if split == "test":
             data = DATA_INFO[dataset]["data"](train=False, **data_configs)
