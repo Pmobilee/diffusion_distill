@@ -141,7 +141,7 @@ DATA_INFO = {
     # "test_size": 10000  # this could be different depending on your dataset split
 },
 "lsun-bedroom": {
-    "data": datasets.LSUN_BEDROOM,
+    "data": datasets.LSUN,
     "num_classes": 1,
     "classes": "bedroom_train", # or 1 if you're using a specific class, or another number if you're using a different subset
     "resolution": (128, 128), # or whatever you choose
@@ -242,7 +242,7 @@ def get_dataloader(
         data = DATA_INFO[dataset]["data"](root=root,transform=transform, classes=['church_outdoor_train'])
     if dataset == "lsun-bedroom":
       
-        data = DATA_INFO[dataset]["data"](root=root,transform=transform, classes=['lsun_bedroom_train'])
+        data = DATA_INFO[dataset]["data"](root=root,transform=transform, classes=['bedroom_train'])
     else:
         if split == "test":
             data = DATA_INFO[dataset]["data"](train=False, **data_configs)
