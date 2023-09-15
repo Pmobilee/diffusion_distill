@@ -198,7 +198,7 @@ def main(args):
         sample_bsz=args.sample_bsz,
         session=args.session,
         distill=args.distill,
-        distill_optimizer=distill_optimizer
+        distill_optimizer=distill_optimizer,
         timesteps=train_timesteps
     )
 
