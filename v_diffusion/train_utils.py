@@ -466,10 +466,16 @@ class Evaluator:
         self.device = device
         self.target_mean, self.target_var = get_precomputed(dataset)
 
-    def eval(self, sample_fn):
+    def eval(self, sample_fn, noises, labels):
+        if noises is None:
+                # fixed x_T for image generation
+                noises = torch.randn((self.num_save_images, ) + self.shape)
+        if labels is None and self.num_classes:
+                labels = self.random_labels()
         self.istats.reset()
         for _ in range(0, self.max_eval_count + self.eval_batch_size, self.eval_batch_size):
-            x = sample_fn(self.eval_batch_size, diffusion=self.diffusion)
+            x = sample_fn(
+                        noises=noises, labels=labels, use_ddim=True)
             self.istats(x.to(self.device))
         gen_mean, gen_var = self.istats.get_statistics()
         fid = calc_fd(gen_mean, gen_var, self.target_mean, self.target_var)
