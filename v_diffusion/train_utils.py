@@ -330,7 +330,7 @@ class Trainer:
                     if i == len(self.trainloader) - 1:
                         self.model.eval()
                         if evaluator is not None:
-                            eval_results = evaluator.eval(self.sample_fn)
+                            eval_results, fid = evaluator.eval(self.sample_fn)
                         else:
                             eval_results = dict()
                         results = dict()
@@ -348,22 +348,23 @@ class Trainer:
                         # wandb_image(x, f"{int(timesteps / 2)}")
                         # # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
 
-                        self.model.eval()
-                        if evaluator is not None:
-                            eval_results = evaluator.eval(self.sample_fn)
-                        else:
-                            eval_results = dict()
-                        results = dict()
-                      
-                        try:
-                            if session != None:
-                                session.log({"fid": eval_results["fid"]})
-                        except e:
-                            print("FID FAILED")
-                            print("E:", e)
-                            continue
                         
-                        self.model.train()
+                        if evaluator is not None:
+                            self.model.eval()
+                            eval_results, fid = evaluator.eval(self.sample_fn)
+                            session.log({"fid": fid})
+                            self.model.train()
+                        
+                     
+                      
+                        # try:
+                        
+                        # except e:
+                        #     print("FID FAILED")
+                        #     print("E:", e)
+                        #     continue
+                        
+                        
 
                     # if session != None and i % 100 == 0:
                             
@@ -471,4 +472,5 @@ class Evaluator:
             x = sample_fn(self.eval_batch_size, diffusion=self.diffusion)
             self.istats(x.to(self.device))
         gen_mean, gen_var = self.istats.get_statistics()
-        return {"fid": calc_fd(gen_mean, gen_var, self.target_mean, self.target_var)}
+        fid = calc_fd(gen_mean, gen_var, self.target_mean, self.target_var)
+        return {"fid": fid}, fid
