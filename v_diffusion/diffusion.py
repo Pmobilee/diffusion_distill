@@ -341,7 +341,7 @@ class GaussianDiffusion:
         for ti in reversed(range(timesteps)):
             t.fill_(ti)
             x_t = self.p_sample_step(
-                denoise_fn, x_t, step=t, y=label, use_ddim=use_ddim)
+                denoise_fn, x_t, step=t, y=label, use_ddim=use_ddim, timesteps=timesteps)
         return x_t.cpu()
 
     @torch.inference_mode()
