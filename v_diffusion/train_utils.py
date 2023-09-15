@@ -330,16 +330,17 @@ class Trainer:
                     if i == len(self.trainloader) - 1:
                         self.model.eval()
                         if evaluator is not None:
-                            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels)
+                            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=2000)
+                            session.log({"final fid (2000)": fid})
                         else:
                             eval_results = dict()
                         results = dict()
                         results.update(self.current_stats)
                         results.update(eval_results)
                         t.set_postfix(results)
-                    print("1")
+               
                     
-                    if session != None and i > 0 and i % 2 == 0:
+                    if session != None and i > 0 and i % 5000 == 0:
                         # x = self.sample_fn(
                         # noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=timesteps)
                         # wandb_image(x, f"{timesteps}")
@@ -349,12 +350,12 @@ class Trainer:
                         # # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
                         
 
-                        print("2")
+                       
                         if evaluator is not None:
-                            print("3")
+                        
                             self.model.eval()
-                            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels)
-                            session.log({"fid": fid})
+                            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=500)
+                            session.log({"fid (500)": fid})
                             print(fid)
                             self.model.train()
                         
