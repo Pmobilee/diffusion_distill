@@ -330,7 +330,7 @@ class Trainer:
                     if i == len(self.trainloader) - 1:
                         self.model.eval()
                         if evaluator is not None:
-                            eval_results, fid = evaluator.eval(self.sample_fn)
+                            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels)
                         else:
                             eval_results = dict()
                         results = dict()
@@ -351,7 +351,7 @@ class Trainer:
                         
                         if evaluator is not None:
                             self.model.eval()
-                            eval_results, fid = evaluator.eval(self.sample_fn)
+                            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels)
                             session.log({"fid": fid})
                             self.model.train()
                         
