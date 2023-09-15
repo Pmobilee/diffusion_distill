@@ -6,7 +6,7 @@
 #SBATCH --partition=gpu
 #SBATCH --gpus=1
 #SBATCH --mem=16G
-#SBATCH --time=08:00:00
+#SBATCH --time=04:00:00
 
 # Execute Program
 module load 2022
