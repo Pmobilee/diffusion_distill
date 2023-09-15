@@ -137,7 +137,12 @@ def main(args):
     with open(os.path.join(chkpt_dir, f"exp_{timestamp}.json"), "w") as f:
         json.dump(configs, f)
 
-    chkpt_path = os.path.join(chkpt_dir, args.chkpt_name or f"vdpm_{dataset}.pt")
+    if args.distill:
+        name = "dist"
+    else:
+        name = "nodist"
+        
+    chkpt_path = os.path.join(chkpt_dir, args.chkpt_name or f"{args.dataset}_{args.train_timesteps}_{name}.pt")
     chkpt_intv = args.chkpt_intv
     logger(f"Checkpoint will be saved to {os.path.abspath(chkpt_path)}", end=" ")
     logger(f"every {chkpt_intv} epoch(s)")
