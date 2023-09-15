@@ -358,7 +358,9 @@ class Trainer:
                         try:
                             if session != None:
                                 session.log({"fid": eval_results["fid"]})
-                        except:
+                        except e:
+                            print("FID FAILED")
+                            print("E:", e)
                             continue
                         
                         self.model.train()
