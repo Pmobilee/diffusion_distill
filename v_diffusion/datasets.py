@@ -240,7 +240,7 @@ def get_dataloader(
     if dataset == "lsun":
       
         data = DATA_INFO[dataset]["data"](root=root,transform=transform, classes=['church_outdoor_train'])
-    if dataset == "lsun-bedroom":
+    if dataset == "lsun_bedroom":
       
         data = DATA_INFO[dataset]["data"](root=root,transform=transform, classes=['bedroom_train'])
     else:
