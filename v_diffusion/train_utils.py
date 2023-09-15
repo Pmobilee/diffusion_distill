@@ -353,6 +353,7 @@ class Trainer:
                             self.model.eval()
                             eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels)
                             session.log({"fid": fid})
+                            print(fid)
                             self.model.train()
                         
                      
