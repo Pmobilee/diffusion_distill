@@ -207,7 +207,7 @@ class Trainer:
             self, noises, labels,
             diffusion=None, use_ddim=False, batch_size=-1, timesteps=None):
         if timesteps == None:
-            timesteps = self.sample_timesteps
+            timesteps = self.timesteps
         if diffusion is None:
             diffusion = self.diffusion
         shape = noises.shape
