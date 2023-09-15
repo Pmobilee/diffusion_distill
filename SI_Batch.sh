@@ -19,5 +19,5 @@ conda activate D-SD
 cd $Home/thesis/Diffusion_Thesis/diffusion_distill
 export LD_LIBRARY_PATH=$HOME/anaconda3/envs/D-SD/lib
 wandb login 
-python train.py --dataset lsun --use-ema --use-ddim --num-save-images 8 --use-cfg --epochs 1 --chkpt-intv 1 --image-intv 1 --num-accum 10 --name nodist_128_256 --batch-size 64 --sample-timesteps 256 --train-timesteps 25 --eval
+python train.py --dataset lsun_bedroom --use-ema --use-ddim --num-save-images 8 --use-cfg --epochs 1 --chkpt-intv 1 --image-intv 1 --num-accum 10 --name nodist_128_256 --batch-size 64 --sample-timesteps 256 --train-timesteps 256 --eval
 
