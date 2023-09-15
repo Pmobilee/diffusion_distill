@@ -324,6 +324,8 @@ class Trainer:
                            
                         
                     t.set_postfix(self.current_stats)
+
+                    
                     
                     if i == len(self.trainloader) - 1:
                         self.model.eval()
@@ -337,14 +339,29 @@ class Trainer:
                         t.set_postfix(results)
 
                     
-                    if session != None and i > 0 and i % 1000 == 0:
-                        x = self.sample_fn(
-                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=timesteps)
-                        wandb_image(x, f"{timesteps}")
-                        x = self.sample_fn(
-                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=int(timesteps / 2))
-                        wandb_image(x, f"{int(timesteps / 2)}")
-                        # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
+                    if session != None and i > 0 and i % 2 == 0:
+                        # x = self.sample_fn(
+                        # noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=timesteps)
+                        # wandb_image(x, f"{timesteps}")
+                        # x = self.sample_fn(
+                        # noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=int(timesteps / 2))
+                        # wandb_image(x, f"{int(timesteps / 2)}")
+                        # # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
+
+                        self.model.eval()
+                        if evaluator is not None:
+                            eval_results = evaluator.eval(self.sample_fn)
+                        else:
+                            eval_results = dict()
+                        results = dict()
+                      
+                        try:
+                            if session != None:
+                                session.log({"fid": eval_results["fid"]})
+                        except:
+                            continue
+                        
+                        self.model.train()
 
                     # if session != None and i % 100 == 0:
                             
