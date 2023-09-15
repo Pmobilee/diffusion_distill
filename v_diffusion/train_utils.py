@@ -205,7 +205,9 @@ class Trainer:
 
     def sample_fn(
             self, noises, labels,
-            diffusion=None, use_ddim=False, batch_size=-1):
+            diffusion=None, use_ddim=False, batch_size=-1, timesteps=None):
+        if timesteps == None:
+            timesteps = self.sample_timesteps
         if diffusion is None:
             diffusion = self.diffusion
         shape = noises.shape
@@ -213,7 +215,7 @@ class Trainer:
             if batch_size == -1:
                 sample = diffusion.p_sample(
                     denoise_fn=self.model, shape=shape, device=self.device,
-                    noise=noises, label=labels, use_ddim=use_ddim)
+                    noise=noises, label=labels, use_ddim=use_ddim, timesteps=timesteps)
             else:
                 sample = []
                 for i in range(0, noises.shape[0], batch_size):
@@ -335,8 +337,11 @@ class Trainer:
                     
                     if session != None and i > 0 and i % 1000 == 0:
                         x = self.sample_fn(
-                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz)
-                        wandb_image(x)
+                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=self.sample_timesteps)
+                        wandb_image(x, f"{self.sample_timesteps}")
+                        x = self.sample_fn(
+                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=self.sample_timesteps / 2)
+                        wandb_image(x, f"{int(self.sample_timesteps / 2)}")
                         # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
 
                     # if session != None and i % 100 == 0:
@@ -364,9 +369,15 @@ class Trainer:
                         
             if self.is_main:
                 if not (e + 1) % self.image_intv and self.num_save_images and image_dir:
-                    x = self.sample_fn(
-                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz)
-                    wandb_image(x)
+                    # x = self.sample_fn(
+                    #     noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz)
+                    if session != None:
+                        x = self.sample_fn(
+                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=self.sample_timesteps)
+                        wandb_image(x, f"{self.sample_timesteps}")
+                        x = self.sample_fn(
+                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=self.sample_timesteps / 2)
+                        wandb_image(x, f"{int(self.sample_timesteps / 2)}")
                     # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
                 if not (e + 1) % self.chkpt_intv and chkpt_path:
                     self.save_checkpoint(chkpt_path, epoch=e+1, **results)

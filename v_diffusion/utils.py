@@ -34,7 +34,7 @@ def save_image(x, path, nrow=8, normalize=True, value_range=(-1., 1.), session=N
     if session != None:
         session.log({"sample": _})
 
-def wandb_image(x):
+def wandb_image(x, name="sample"):
     img = make_grid(x, nrow=1, normalize=True, value_range=(-1., 1.))
     img = img.permute(1, 2, 0).cpu().numpy()
     # Convert the image data to uint8 format and scale it to [0, 255]
@@ -43,7 +43,7 @@ def wandb_image(x):
     img_pil = Image.fromarray(img)
     wandb_img = wandb.Image(img_pil)
     # Log the image to wandb
-    wandb.log({"sample": wandb_img})
+    wandb.log({name: wandb_img})
 
 
 
