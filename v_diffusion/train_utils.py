@@ -357,7 +357,10 @@ class Trainer:
                             eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=500)
                             session.log({"fid (500)": fid})
                             print(fid)
+
+                            self.save_checkpoint(chkpt_path, epoch=str(e+1) + "_i", **results)
                             self.model.train()
+
                         
                      
                       
