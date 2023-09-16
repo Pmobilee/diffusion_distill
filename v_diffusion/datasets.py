@@ -144,10 +144,10 @@ DATA_INFO = {
     "data": datasets.LSUN,
     "num_classes": 1,
     "classes": "bedroom_train", # or 1 if you're using a specific class, or another number if you're using a different subset
-    "resolution": (128, 128), # or whatever you choose
+    "resolution": (64, 64), # or whatever you choose
     "channels": 3,
     "transform": transforms.Compose([
-        transforms.Resize((128, 128)),
+        transforms.Resize((64, 64)),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ]),
