@@ -358,7 +358,7 @@ class Trainer:
                             session.log({"fid (500)": fid})
                             print(fid)
 
-                            self.save_checkpoint(chkpt_path, epoch=str(e+1) + "_"+ {i})
+                            self.save_checkpoint(chkpt_path, epoch=str(e+1) + "_"+ str(i))
                             self.model.train()
 
                         
