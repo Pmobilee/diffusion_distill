@@ -142,7 +142,7 @@ def main(args):
     else:
         name = "nodist"
 
-    chkpt_path = os.path.join(chkpt_dir, args.chkpt_name or f"{args.dataset}_{args.train_timesteps}_{name}.pt")
+    chkpt_path = os.path.join(chkpt_dir, args.chkpt_name or f"{args.name}_{args.dataset}_{args.train_timesteps}_{name}.pt")
     chkpt_intv = args.chkpt_intv
     logger(f"Checkpoint will be saved to {os.path.abspath(chkpt_path)}", end=" ")
     logger(f"every {chkpt_intv} epoch(s)")
