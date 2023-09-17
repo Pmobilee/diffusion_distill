@@ -307,7 +307,7 @@ class Trainer:
                         )
 
                         if session != None:
-                            session.log({"process_loss": self.current_stats["loss"]})
+                            # session.log({"process_loss": self.current_stats["loss"]})
                             session.log({"combined_loss": combined_loss})
                             session.log({"train_loss": train_loss})
                             session.log({"distill_loss": distill_loss})
@@ -319,7 +319,7 @@ class Trainer:
                             update=total_batches % self.num_accum == 0
                             )
                         if session != None:
-                            session.log({"process_loss": self.current_stats["loss"]})
+                            # session.log({"process_loss": self.current_stats["loss"]})
                             session.log({"train_loss": loss})
                            
                         
@@ -358,7 +358,7 @@ class Trainer:
                             session.log({"fid (500)": fid})
                             print(fid)
 
-                            self.save_checkpoint(chkpt_path, epoch=str(e+1) + "_i")
+                            self.save_checkpoint(chkpt_path, epoch=str(e+1) + "_"+ str(i))
                             self.model.train()
 
                         
