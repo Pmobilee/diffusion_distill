@@ -10,7 +10,7 @@
     "in_channels": 3,
     "hid_channels": 256,
     "ch_multipliers": [1, 1, 1],
-    "num_res_blocks": 3,
+    "num_res_blocks": 5,
     "apply_attn": [false, true, true],
     "drop_rate": 0.2
   },
