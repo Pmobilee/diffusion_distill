@@ -223,7 +223,7 @@ def get_dataloader(
     target_transform = DATA_INFO[dataset].get("target_transform", None)
     data_configs = {
         "root": root,
-        "download": False,
+        "download": True,
         "transform": transform,
         "target_transform": target_transform
     }
