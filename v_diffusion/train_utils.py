@@ -271,7 +271,8 @@ class Trainer:
             session=None,
             distill=False,
             distill_optimizer=None,
-            timesteps=128
+            timesteps=128,
+            fid=False
     ):
 
         if self.is_main and self.num_save_images:
@@ -340,7 +341,7 @@ class Trainer:
                         t.set_postfix(results)
                
                     
-                    if session != None and i > 0 and i % 5000 == 0:
+                    if session != None and i > 0 and i % 5 == 0:
                         x = self.sample_fn(
                         noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=timesteps)
                         wandb_image(x, f"{timesteps}")
@@ -351,14 +352,17 @@ class Trainer:
                         
 
                        
-                        if evaluator is not None:
+                        if evaluator is not None and fid:
                         
                             self.model.eval()
-                            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=500)
-                            session.log({"fid (500)": fid})
+                            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=100, timesteps = timesteps)
+                            session.log({f"fid {timesteps}": fid})
                             print(fid)
-
-                            self.save_checkpoint(chkpt_path, epoch=str(e+1) + "_"+ str(i))
+                            timesteps = int( timesteps / 2)
+                            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=100, timesteps = timesteps)
+                            session.log({f"fid {timesteps}": fid})
+                            # self.save_checkpoint(chkpt_path, epoch=str(e+1) + "_"+ str(i))
+                            # exit()
                             self.model.train()
 
                         
@@ -412,6 +416,62 @@ class Trainer:
                     self.save_checkpoint(chkpt_path, epoch=e+1, **results)
             if self.distributed:
                 dist.barrier()  # synchronize all processes here
+
+
+    def generate_imgs(
+            self,
+            session=None,
+            timesteps=[128]
+    ):
+        """
+        Does not work yet, chkpts not including all the layers
+        """
+        import os
+
+        chkpt_path = './chkpts/FID/'
+        FID_path = './FID_IMAGES/'
+        files = []
+        fid_paths = []
+
+        # Check if the folder exists
+        if os.path.exists(chkpt_path):
+            # List all files in the directory
+            for filename in os.listdir(chkpt_path):
+                
+                file_path = os.path.join(chkpt_path, filename) 
+                fid_path = os.path.join(FID_path, filename) + "/"
+                # Check if it's a file (and not a directory)
+                if os.path.isfile(file_path):
+                    files.append(filename)
+                    fid_paths.append(fid_path)
+        print(files)
+        for i, path in enumerate(files):
+            self.load_checkpoint(chkpt_path + path, map_location="cuda:0")
+            with tqdm.tqdm(range(50)) as image_generator:
+                              
+                self.model.eval()
+                self.num_save_images = 1
+                self.num_classes = 1
+                self.sample_bsz = 1
+
+
+                for j, e in enumerate(image_generator):
+
+                    if not self.use_cfg:
+                        y = None
+                    
+                    noises = torch.randn((1)  + self.shape)    
+                    labels = self.random_labels()
+
+                    x = self.sample_fn(
+                        noises=noises, labels=labels, use_ddim=True)      
+                            
+                    save_image(x, os.path.join(fid_folder, f"{j}.jpg"), session=session)        
+
+
+                    
+
+  
 
     @property
     def trainees(self):
@@ -473,7 +533,7 @@ class Evaluator:
         self.device = device
         self.target_mean, self.target_var = get_precomputed(dataset)
 
-    def eval(self, sample_fn, noises, labels, max_eval_count=None):
+    def eval(self, sample_fn, noises, labels, max_eval_count=None, timesteps=128):
         if max_eval_count == None:
             max_eval_count = self.max_eval_count
         if noises is None:
@@ -484,7 +544,7 @@ class Evaluator:
         self.istats.reset()
         for _ in range(0, max_eval_count + self.eval_batch_size, self.eval_batch_size):
             x = sample_fn(
-                        noises=noises, labels=labels, use_ddim=True)
+                        noises=noises, labels=labels, use_ddim=True, timesteps=timesteps)
             self.istats(x.to(self.device))
         gen_mean, gen_var = self.istats.get_statistics()
         fid = calc_fd(gen_mean, gen_var, self.target_mean, self.target_var)
