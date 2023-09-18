@@ -271,7 +271,8 @@ class Trainer:
             session=None,
             distill=False,
             distill_optimizer=None,
-            timesteps=128
+            timesteps=128,
+            name=None
     ):
 
         if self.is_main and self.num_save_images:
@@ -341,25 +342,27 @@ class Trainer:
                
                     
                     if session != None and i > 0 and i % 5000 == 0:
+                        self.model.eval()
                         x = self.sample_fn(
                         noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=timesteps)
                         wandb_image(x, f"{timesteps}")
-                        x = self.sample_fn(
-                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=int(timesteps / 2))
-                        wandb_image(x, f"{int(timesteps / 2)}")
+                        # x = self.sample_fn(
+                        # noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=int(timesteps / 2))
+                        # wandb_image(x, f"{int(timesteps / 2)}")
                         # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
                         
 
                        
-                        if evaluator is not None:
+                        # if evaluator is not None:
                         
-                            self.model.eval()
-                            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=500)
-                            session.log({"fid (500)": fid})
-                            print(fid)
+                        
+                        eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=50)
+                        session.log({"fid (500)": fid})
+                        print(fid)
 
-                            self.save_checkpoint(chkpt_path, epoch=str(e+1) + "_"+ str(i))
-                            self.model.train()
+                        torch.save(self.model, f"./chkpts/{name}_{total_batches}.pth")
+                        # self.save_checkpoint(chkpt_path, epoch=str(e+1) + "_"+ str(i))
+                        self.model.train()
 
                         
                      

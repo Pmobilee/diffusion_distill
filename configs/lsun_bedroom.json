@@ -1,6 +1,6 @@
 {
     "train": {
-      "lr": 2e-4,
+      "lr": 4e-4,
       "batch_size": 128,
       "weight_decay": 0.001,
       "grad_norm": 1.0,
@@ -8,9 +8,9 @@
     },
     "denoise": {
       "in_channels": 3,
-      "hid_channels": 128,
+      "hid_channels": 256,
       "ch_multipliers": [1, 2, 3, 4],
-      "num_res_blocks": 2,
+      "num_res_blocks": 5,
       "apply_attn": [false, true, true, true],
       "drop_rate": 0.1
     },
