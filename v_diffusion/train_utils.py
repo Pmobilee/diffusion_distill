@@ -272,7 +272,8 @@ class Trainer:
             distill=False,
             distill_optimizer=None,
             timesteps=128,
-            fid=False
+            fid=False,
+            name="test"
     ):
 
         if self.is_main and self.num_save_images:
@@ -358,9 +359,37 @@ class Trainer:
                             eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=100, timesteps = timesteps)
                             session.log({f"fid {timesteps}": fid})
                             print(fid)
+                            base_folder = "./FID_IMAGES/"
+                            filename = name
+                            # Combine them to get the full path
+                            full_path = os.path.join(base_folder, filename)
+
+                            # Extract the folder path from the full path
+                            folder_path = os.path.dirname(full_path)
+                            if not os.path.exists(folder_path):
+                                os.makedirs(folder_path)
+
+
+                            for i in range(5):
+                                
+                                random_noises = torch.randn((self.num_save_images, ) + self.shape)
+                                random_labels = self.random_labels()
+                                x = self.sample_fn(
+                                noises=random_noises, labels=random_labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=timesteps)
+                                save_image(x, os.path.join(folder_path, f"{timesteps}_{i+1}.jpg"), session=session)
+
+                            
                             timesteps = int( timesteps / 2)
                             eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=100, timesteps = timesteps)
                             session.log({f"fid {timesteps}": fid})
+                            print(fid)
+                            for i in range(5):
+                                
+                                random_noises = torch.randn((self.num_save_images, ) + self.shape)
+                                random_labels = self.random_labels()
+                                x = self.sample_fn(
+                                noises=random_noises, labels=random_labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=timesteps)
+                                save_image(x, os.path.join(folder_path, f"{timesteps}_{i+1}.jpg"), session=session)
                             # self.save_checkpoint(chkpt_path, epoch=str(e+1) + "_"+ str(i))
                             # exit()
                             self.model.train()
