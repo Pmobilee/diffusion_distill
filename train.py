@@ -192,11 +192,11 @@ def main(args):
             logger("Checkpoint file does not exist!")
             logger("Starting from scratch...")
     
-    if args.fid:
-        chkpt_path = "/home/damion/Code/DSD/diffusion_distill/chkpts/dist95_64_128_lsun_bedroom_128_dist_1_5000.pt"
-        trainer.load_checkpoint(chkpt_path, map_location='cuda:0')
-        print("FID:", args.fid)
-        # trainer.generate_imgs()
+    # if args.fid:
+    #     chkpt_path = "/home/damion/Code/DSD/diffusion_distill/chkpts/dist95_64_128_lsun_bedroom_128_dist_1_5000.pt"
+    #     trainer.load_checkpoint(chkpt_path, map_location='cuda:0')
+    #     print("FID:", args.fid)
+    #     # trainer.generate_imgs()
         
 
     # use cudnn benchmarking algorithm to select the best conv algorithm
@@ -215,7 +215,8 @@ def main(args):
             session=args.session,
             distill=args.distill,
             distill_optimizer=distill_optimizer,
-            timesteps=train_timesteps
+            timesteps=train_timesteps,
+            fid=args.fid
         )
 
 def wandb_log(name, lr, tags, notes, project="cvpr_Diffusion"):
