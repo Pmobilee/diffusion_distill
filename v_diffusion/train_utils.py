@@ -183,8 +183,8 @@ class Trainer:
 
         
         # Combine losses with weights (hyperparameters)
-        alpha = 0.9  # weight for main loss
-        beta = 0.1  # weight for distillation loss
+        alpha = 0.95  # weight for main loss
+        beta = 0.05  # weight for distillation loss
         
         loss = alpha * main_loss + beta * distill_loss
         # loss = main_loss
