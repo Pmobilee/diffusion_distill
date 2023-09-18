@@ -115,10 +115,13 @@ def main(args):
     split = "all" if dataset == "celeba" else "train"
     num_workers = args.num_workers
     batch_size = args.batch_size
+
     trainloader, sampler = get_dataloader(
         dataset, batch_size=batch_size // args.num_accum, split=split, val_size=0., random_seed=seed,
         root=root, drop_last=True, pin_memory=True, num_workers=num_workers, distributed=distributed
     )  # drop_last to have a static input shape; num_workers > 0 to enable asynchronous data loading
+
+   
 
     configs["train"]["epochs"] = epochs
     configs["use_ema"] = args.use_ema
@@ -188,12 +191,20 @@ def main(args):
         except FileNotFoundError:
             logger("Checkpoint file does not exist!")
             logger("Starting from scratch...")
+    
+    # if args.fid:
+    #     chkpt_path = "/home/damion/Code/DSD/diffusion_distill/chkpts/dist95_64_128_lsun_bedroom_128_dist_1_5000.pt"
+    #     trainer.load_checkpoint(chkpt_path, map_location='cuda:0')
+    #     print("FID:", args.fid)
+    #     # trainer.generate_imgs()
+        
 
     # use cudnn benchmarking algorithm to select the best conv algorithm
     if torch.backends.cudnn.is_available():  # noqa
         torch.backends.cudnn.benchmark = True  # noqa
         logger(f"cuDNN benchmark: ON")
 
+    # if not args.fid:
     logger("Training starts...", flush=True)
     trainer.train(
         evaluator,
@@ -204,7 +215,9 @@ def main(args):
         session=args.session,
         distill=args.distill,
         distill_optimizer=distill_optimizer,
-        timesteps=train_timesteps
+        timesteps=train_timesteps,
+        fid=args.fid,
+        name=args.name
     )
 
 def wandb_log(name, lr, tags, notes, project="cvpr_Diffusion"):
@@ -272,6 +285,7 @@ if __name__ == "__main__":
     parser.add_argument("--distributed", action="store_true", help="whether to use distributed training")
     parser.add_argument("--distill", action="store_true", help="whether to distillation during training")
     parser.add_argument("--name", type=str, help="wandb name", default="TD_lsun")
+    parser.add_argument("--fid", action="store_true", help="generate images for FID")
     args = parser.parse_args()
 
     session = wandb_log(name=args.name, lr=args.lr, tags=["train_distill", args.dataset], notes="", project="train_distill")
