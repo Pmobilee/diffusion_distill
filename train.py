@@ -115,13 +115,13 @@ def main(args):
     split = "all" if dataset == "celeba" else "train"
     num_workers = args.num_workers
     batch_size = args.batch_size
-    if not args.fid:
-        trainloader, sampler = get_dataloader(
-            dataset, batch_size=batch_size // args.num_accum, split=split, val_size=0., random_seed=seed,
-            root=root, drop_last=True, pin_memory=True, num_workers=num_workers, distributed=distributed
-        )  # drop_last to have a static input shape; num_workers > 0 to enable asynchronous data loading
-    else:
-        trainloader, sampler = None, None
+
+    trainloader, sampler = get_dataloader(
+        dataset, batch_size=batch_size // args.num_accum, split=split, val_size=0., random_seed=seed,
+        root=root, drop_last=True, pin_memory=True, num_workers=num_workers, distributed=distributed
+    )  # drop_last to have a static input shape; num_workers > 0 to enable asynchronous data loading
+
+   
 
     configs["train"]["epochs"] = epochs
     configs["use_ema"] = args.use_ema
