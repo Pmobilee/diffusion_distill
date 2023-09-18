@@ -204,21 +204,21 @@ def main(args):
         torch.backends.cudnn.benchmark = True  # noqa
         logger(f"cuDNN benchmark: ON")
 
-    if not args.fid:
-        logger("Training starts...", flush=True)
-        trainer.train(
-            evaluator,
-            chkpt_path=chkpt_path,
-            image_dir=image_dir,
-            use_ddim=args.use_ddim,
-            sample_bsz=args.sample_bsz,
-            session=args.session,
-            distill=args.distill,
-            distill_optimizer=distill_optimizer,
-            timesteps=train_timesteps,
-            fid=args.fid,
-            name=args.name
-        )
+    # if not args.fid:
+    logger("Training starts...", flush=True)
+    trainer.train(
+        evaluator,
+        chkpt_path=chkpt_path,
+        image_dir=image_dir,
+        use_ddim=args.use_ddim,
+        sample_bsz=args.sample_bsz,
+        session=args.session,
+        distill=args.distill,
+        distill_optimizer=distill_optimizer,
+        timesteps=train_timesteps,
+        fid=args.fid,
+        name=args.name
+    )
 
 def wandb_log(name, lr, tags, notes, project="cvpr_Diffusion"):
     """
