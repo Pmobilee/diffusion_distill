@@ -181,7 +181,7 @@ class Trainer:
         B = x.shape[0]
         main_loss, distill_loss = self.train_distill_loss(x, y)
 
-        beta = torch.min(1, 15000 / i) * 0.2
+        beta = torch.min(1, 15000 / i+1) * 0.2
         # Combine losses with weights (hyperparameters)
         alpha = 0.8  # weight for main loss
         # beta = 0.025  # weight for distillation loss
