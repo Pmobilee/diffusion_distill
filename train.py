@@ -288,8 +288,8 @@ if __name__ == "__main__":
     parser.add_argument("--fid", action="store_true", help="generate images for FID")
     args = parser.parse_args()
 
-    # session = wandb_log(name=args.name, lr=args.lr, tags=["train_distill", args.dataset], notes="", project="train_distill")
-    session =None
+    session = wandb_log(name=args.name, lr=args.lr, tags=["train_distill", args.dataset], notes="", project="train_distill")
+    # session =None
     args.session = session
     main(args)
 
