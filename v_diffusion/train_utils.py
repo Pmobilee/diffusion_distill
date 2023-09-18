@@ -85,6 +85,7 @@ class Trainer:
             rank=0  # process id for distributed training
     ):
         self.model = model
+        self.half_timesteps = int(timesteps / 2)
         self.distill_optimizer = distill_optimizer
         self.optimizer = optimizer
         self.diffusion = diffusion
@@ -180,10 +181,11 @@ class Trainer:
         B = x.shape[0]
         main_loss, distill_loss = self.train_distill_loss(x, y)
 
-        
+ 
         # Combine losses with weights (hyperparameters)
-        alpha = 0.9  # weight for main loss
-        beta = 0.1  # weight for distillation loss
+        alpha = 0.8  # weight for main loss
+        # beta = 0.1  # weight for distillation loss
+        beta = 0.2 * (10000 / (i+1))
         
         loss = alpha * main_loss + beta * distill_loss
         # loss = main_loss
@@ -205,11 +207,17 @@ class Trainer:
 
     def sample_fn(
             self, noises, labels,
-            diffusion=None, use_ddim=False, batch_size=-1, timesteps=None):
-        if timesteps == None:
-            timesteps = self.timesteps
+            diffusion=None, use_ddim=False, batch_size=-1, timesteps=None, half = False):
+        
         if diffusion is None:
             diffusion = self.diffusion
+        
+        if timesteps == None:
+            if half:
+                timesteps = self.half_timesteps 
+                print("setting half timesteps")
+            diffusion.sample_timesteps = timesteps
+            diffusion.timesteps = timesteps
         shape = noises.shape
         with self.ema:
             if batch_size == -1:
@@ -272,7 +280,8 @@ class Trainer:
             distill=False,
             distill_optimizer=None,
             timesteps=128,
-            name=None
+            name="test"
+
     ):
 
         if self.is_main and self.num_save_images:
@@ -331,7 +340,7 @@ class Trainer:
                     if i == len(self.trainloader) - 1:
                         self.model.eval()
                         if evaluator is not None:
-                            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=2000)
+                            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=500)
                             session.log({"final fid (2000)": fid})
                         else:
                             eval_results = dict()
@@ -349,12 +358,27 @@ class Trainer:
                         # x = self.sample_fn(
                         # noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=int(timesteps / 2))
                         # wandb_image(x, f"{int(timesteps / 2)}")
-                        # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
-                        
 
-                       
-                        # if evaluator is not None:
-                        
+                        # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
+                        # print(x == x_first)
+
+                        # # if evaluator is not None:
+                        # base_folder = "./FID_IMAGES/"
+                        # filename = name
+                        # # Combine them to get the full path
+                        # full_path = os.path.join(base_folder, filename)
+
+                        # # Extract the folder path from the full path
+                        # folder_path = os.path.dirname(full_path)
+                        # if not os.path.exists(folder_path):
+                        #     os.makedirs(folder_path)
+
+                        # eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=50, timesteps = timesteps, folder_path=folder_path)
+                        # # eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=100, timesteps = timesteps, folder_path=folder_path)
+                        # session.log({f"fid {timesteps}": fid})
+                        # new_timesteps = int(timesteps / 2)
+                        # eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=50, timesteps = new_timesteps, folder_path=folder_path)
+                        # session.log({f"fid {new_timesteps}": fid})
                         
                         eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=50)
                         session.log({"fid (500)": fid})
@@ -362,6 +386,7 @@ class Trainer:
 
                         torch.save(self.model, f"./chkpts/{name}_{total_batches}.pth")
                         # self.save_checkpoint(chkpt_path, epoch=str(e+1) + "_"+ str(i))
+
                         self.model.train()
 
                         
@@ -411,10 +436,66 @@ class Trainer:
                         noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=int(timesteps / 2))
                         wandb_image(x, f"{int(timesteps / 2)}")
                     # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
-                if not (e + 1) % self.chkpt_intv and chkpt_path:
-                    self.save_checkpoint(chkpt_path, epoch=e+1, **results)
+                # if not (e + 1) % self.chkpt_intv and chkpt_path:
+                #     self.save_checkpoint(chkpt_path, epoch=e+1, **results)
             if self.distributed:
                 dist.barrier()  # synchronize all processes here
+
+
+    def generate_imgs(
+            self,
+            session=None,
+            timesteps=[128]
+    ):
+        """
+        Does not work yet, chkpts not including all the layers
+        """
+        import os
+
+        chkpt_path = './chkpts/FID/'
+        FID_path = './FID_IMAGES/'
+        files = []
+        fid_paths = []
+
+        # Check if the folder exists
+        if os.path.exists(chkpt_path):
+            # List all files in the directory
+            for filename in os.listdir(chkpt_path):
+                
+                file_path = os.path.join(chkpt_path, filename) 
+                fid_path = os.path.join(FID_path, filename) + "/"
+                # Check if it's a file (and not a directory)
+                if os.path.isfile(file_path):
+                    files.append(filename)
+                    fid_paths.append(fid_path)
+        print(files)
+        for i, path in enumerate(files):
+            self.load_checkpoint(chkpt_path + path, map_location="cuda:0")
+            with tqdm.tqdm(range(50)) as image_generator:
+                              
+                self.model.eval()
+                self.num_save_images = 1
+                self.num_classes = 1
+                self.sample_bsz = 1
+
+
+                for j, e in enumerate(image_generator):
+
+                    if not self.use_cfg:
+                        y = None
+                    
+                    noises = torch.randn((1)  + self.shape)    
+                    labels = self.random_labels()
+
+                    x = self.sample_fn(
+                        noises=noises, labels=labels, use_ddim=True)      
+                            
+                    save_image(x, os.path.join(fid_folder, f"{j}.jpg"), session=session)        
+
+
+                    
+
+  
 
     @property
     def trainees(self):
@@ -476,7 +557,7 @@ class Evaluator:
         self.device = device
         self.target_mean, self.target_var = get_precomputed(dataset)
 
-    def eval(self, sample_fn, noises, labels, max_eval_count=None):
+    def eval(self, sample_fn, noises, labels, max_eval_count=None, timesteps=128, folder_path=None):
         if max_eval_count == None:
             max_eval_count = self.max_eval_count
         if noises is None:
@@ -485,9 +566,11 @@ class Evaluator:
         if labels is None and self.num_classes:
                 labels = self.random_labels()
         self.istats.reset()
-        for _ in range(0, max_eval_count + self.eval_batch_size, self.eval_batch_size):
+        for index in range(0, max_eval_count + self.eval_batch_size, self.eval_batch_size):
             x = sample_fn(
-                        noises=noises, labels=labels, use_ddim=True)
+                        noises=noises, labels=labels, use_ddim=True, timesteps=timesteps)
+            if folder_path != None:
+                save_image(x, os.path.join(folder_path, f"{timesteps}_{index +1}.jpg"))
             self.istats(x.to(self.device))
         gen_mean, gen_var = self.istats.get_statistics()
         fid = calc_fd(gen_mean, gen_var, self.target_mean, self.target_var)
