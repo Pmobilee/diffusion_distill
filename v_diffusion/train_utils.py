@@ -350,7 +350,11 @@ class Trainer:
                         t.set_postfix(results)
                
                     
-                    if session != None and i > 0 and i % 5000 == 0:
+                    if session != None and total_batches % 2000 == 0:
+                    # if total_batches % 5000 == 0:
+                   
+                        
+
                         self.model.eval()
                         x = self.sample_fn(
                         noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=timesteps)

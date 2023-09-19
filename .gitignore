@@ -1,4 +1,5 @@
 # Byte-compiled / optimized / DLL files
+*.pth
 __pycache__/
 *.py[cod]
 *$py.class
@@ -178,3 +179,4 @@ datasets/cifar10/data_batch_4
 datasets/cifar10/data_batch_5
 datasets/cifar10/readme.html
 images/train/cifar10/31.jpg
+FROM_LATEST_RUNS/dist_64_5001.pth

@@ -237,10 +237,10 @@ def get_dataloader(
     }
     if dataset == "celeba":
         data = DATA_INFO[dataset]["data"](root=root, split=split, transform=transform)
-    if dataset == "lsun":
+    elif dataset == "lsun":
       
         data = DATA_INFO[dataset]["data"](root=root,transform=transform, classes=['church_outdoor_train'])
-    if dataset == "lsun_bedroom":
+    elif dataset == "lsun_bedroom":
       
         data = DATA_INFO[dataset]["data"](root=root,transform=transform, classes=['bedroom_train'])
     else:
