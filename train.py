@@ -216,7 +216,6 @@ def main(args):
         distill=args.distill,
         distill_optimizer=distill_optimizer,
         timesteps=train_timesteps,
-        fid=args.fid,
         name=args.name
     )
 

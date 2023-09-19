@@ -183,9 +183,9 @@ class Trainer:
 
  
         # Combine losses with weights (hyperparameters)
-        alpha = 0.8  # weight for main loss
-        # beta = 0.1  # weight for distillation loss
-        beta = 0.2 * (10000 / (i+1))
+        alpha = 0.9  # weight for main loss
+        beta = 0.1  # weight for distillation loss
+        # beta = 0.2 * (10000 / (i+1))
         
         loss = alpha * main_loss + beta * distill_loss
         # loss = main_loss
@@ -280,8 +280,8 @@ class Trainer:
             distill=False,
             distill_optimizer=None,
             timesteps=128,
-            fid=False,
             name="test"
+
     ):
 
         if self.is_main and self.num_save_images:
@@ -354,14 +354,15 @@ class Trainer:
                     # if total_batches % 5000 == 0:
                    
                         
+
                         self.model.eval()
-                        x_first = self.sample_fn(
-                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=timesteps, half=False)
-                        wandb_image(x_first, f"{timesteps}")
-                        
                         x = self.sample_fn(
-                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=self.half_timesteps, half=True)
-                        wandb_image(x, f"{int(timesteps / 2)}")
+                        noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=timesteps)
+                        wandb_image(x, f"{timesteps}")
+                        # x = self.sample_fn(
+                        # noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=int(timesteps / 2))
+                        # wandb_image(x, f"{int(timesteps / 2)}")
+
                         # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
                         # print(x == x_first)
 
@@ -383,8 +384,13 @@ class Trainer:
                         # eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=50, timesteps = new_timesteps, folder_path=folder_path)
                         # session.log({f"fid {new_timesteps}": fid})
                         
+                        eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=50)
+                        session.log({"fid (500)": fid})
+                        print(fid)
 
-                        torch.save(self.model, f'./chkpts/{name}_{total_batches}.pth')
+                        torch.save(self.model, f"./chkpts/{name}_{total_batches}.pth")
+                        # self.save_checkpoint(chkpt_path, epoch=str(e+1) + "_"+ str(i))
+
                         self.model.train()
 
                         
