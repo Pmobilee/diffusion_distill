@@ -7,7 +7,7 @@
   },
   "denoise": {
     "in_channels": 3,
-    "hid_channels": 64,
+    "hid_channels": 256,
     "ch_multipliers": [1, 2, 3, 4],
     "num_res_blocks": 2,
     "apply_attn": [false, true, true, true],

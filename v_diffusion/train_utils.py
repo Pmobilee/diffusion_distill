@@ -350,7 +350,7 @@ class Trainer:
                         t.set_postfix(results)
                
                     
-                    if session != None and total_batches % 2500 == 0:
+                    if session != None and total_batches % 2000 == 0:
                     # if total_batches % 5000 == 0:
                    
                         
