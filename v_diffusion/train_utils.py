@@ -457,7 +457,7 @@ class Trainer:
             
             self.model.eval()
             print("---starting FID calc for:", name)
-            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=5)
+            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=30000)
            
             print(fid)
             return fid
