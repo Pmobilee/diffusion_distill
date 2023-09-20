@@ -445,7 +445,24 @@ class Trainer:
             if self.distributed:
                 dist.barrier()  # synchronize all processes here
 
+    def FID(self, evaluator, name):
 
+        # if self.is_main and self.num_save_images:
+            
+                # fixed x_T for image generation
+            noises = torch.randn((self.num_save_images, ) + self.shape).to(torch.device("cuda:0"))
+        
+            labels = self.random_labels().to(torch.device("cuda:0"))
+
+            
+            self.model.eval()
+            print("---starting FID calc for:", name)
+            eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=5)
+           
+            print(fid)
+            return fid
+
+    
     def generate_imgs(
             self,
             session=None,
