@@ -26,7 +26,7 @@ def main(args):
     chkpts_dir = r"/run/media/damion/Data/Thesis BACKUP/distilled/"
     # chkpts_dir = r"./chkpts/"
     datasets = list_folders(chkpts_dir)
-    datasets = ["lsun_bedroom"]
+    datasets = ["celeba"]
     for dataset in datasets:
         batch_size = 32
         num_workers = 4
@@ -164,7 +164,7 @@ def main(args):
             fid_dataframe = pd.concat([fid_dataframe, new_row])
             
             
-            fid_dataframe.to_csv("FIDs_bedroom.csv")
+            fid_dataframe.to_csv("FIDs_celeb.csv")
 
 def wandb_log(name, lr, tags, notes, project="cvpr_Diffusion"):
     """
