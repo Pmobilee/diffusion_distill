@@ -23,8 +23,8 @@ def list_folders(directory_path):
 @errors.record
 def main(args):
     fid_dataframe = pd.DataFrame(columns=['dataset', 'checkpoint', 'fid'])
-    chkpts_dir = r"/run/media/damion/Data/Thesis BACKUP/distilled/"
-    # chkpts_dir = r"./chkpts/"
+    # chkpts_dir = r"/run/media/damion/Data/Thesis BACKUP/distilled/"
+    chkpts_dir = r"./chkpts/"
     datasets = list_folders(chkpts_dir)
     datasets = ["celeba"]
     for dataset in datasets:
