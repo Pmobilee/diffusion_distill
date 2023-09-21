@@ -164,7 +164,7 @@ def main(args):
             fid_dataframe = pd.concat([fid_dataframe, new_row])
             
             
-            fid_dataframe.to_csv("FIDs_celeb.csv")
+            fid_dataframe.to_csv("FIDs_lsun.csv")
 
 def wandb_log(name, lr, tags, notes, project="cvpr_Diffusion"):
     """
