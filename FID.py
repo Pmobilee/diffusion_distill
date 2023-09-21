@@ -23,10 +23,10 @@ def list_folders(directory_path):
 @errors.record
 def main(args):
     fid_dataframe = pd.DataFrame(columns=['dataset', 'checkpoint', 'fid'])
-    # chkpts_dir = r"/run/media/damion/Data/Thesis BACKUP/distilled/"
-    chkpts_dir = r"./chkpts/"
+    chkpts_dir = r"/run/media/damion/Data/Thesis BACKUP/distilled/"
+    # chkpts_dir = r"./chkpts/"
     datasets = list_folders(chkpts_dir)
-    
+    datasets = ["lsun_bedroom"]
     for dataset in datasets:
         batch_size = 32
         num_workers = 4
@@ -164,7 +164,7 @@ def main(args):
             fid_dataframe = pd.concat([fid_dataframe, new_row])
             
             
-            fid_dataframe.to_csv("FIDs.csv")
+            fid_dataframe.to_csv("FIDs_bedroom.csv")
 
 def wandb_log(name, lr, tags, notes, project="cvpr_Diffusion"):
     """
