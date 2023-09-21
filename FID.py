@@ -26,7 +26,7 @@ def main(args):
     # chkpts_dir = r"/run/media/damion/Data/Thesis BACKUP/distilled/"
     chkpts_dir = r"./chkpts/"
     datasets = list_folders(chkpts_dir)
-    datasets = ["celeba"]
+    datasets = ["lsun_bedroom"]
     for dataset in datasets:
         batch_size = 32
         num_workers = 4
