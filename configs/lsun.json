@@ -1,17 +1,17 @@
 {
     "train": {
       "lr": 2e-4,
-      "batch_size": 128,
+      "batch_size": 64,
       "weight_decay": 0.001,
       "grad_norm": 1.0,
       "warmup": 1000
     },
     "denoise": {
       "in_channels": 3,
-      "hid_channels": 256,
-      "ch_multipliers": [1, 2, 3, 4],
-      "num_res_blocks": 2,
-      "apply_attn": [false, true, true, true],
+      "hid_channels": 128,
+      "ch_multipliers": [1, 2, 4, 8],
+      "num_res_blocks": 4,
+      "apply_attn": true,
       "drop_rate": 0.1
     },
     "diffusion": {
@@ -24,3 +24,4 @@
       "loss_type": "mse"
     }
   }
+
