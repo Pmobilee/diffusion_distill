@@ -283,13 +283,13 @@ class Trainer:
             name="test"
 
     ):
-
+       
         if self.is_main and self.num_save_images:
             if noises is None:
-                # fixed x_T for image generation
                 noises = torch.randn((self.num_save_images, ) + self.shape)
-            if labels is None and self.num_classes:
+            if labels is None and self.num_classes:     
                 labels = self.random_labels()
+      
 
         total_batches = 0
         for e in range(self.start_epoch, self.epochs):
@@ -350,7 +350,7 @@ class Trainer:
                         t.set_postfix(results)
                
                     
-                    if session != None and total_batches % 2000 == 0:
+                    if session != None and total_batches % 4000 == 0:
                     # if total_batches % 5000 == 0:
                    
                         
@@ -359,34 +359,11 @@ class Trainer:
                         x = self.sample_fn(
                         noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=timesteps)
                         wandb_image(x, f"{timesteps}")
-                        # x = self.sample_fn(
-                        # noises=noises, labels=labels, use_ddim=use_ddim, batch_size=sample_bsz, timesteps=int(timesteps / 2))
-                        # wandb_image(x, f"{int(timesteps / 2)}")
-
-                        # save_image(x, os.path.join(image_dir, f"{e+1}.jpg"), session=session)
-                        # print(x == x_first)
-
-                        # # if evaluator is not None:
-                        # base_folder = "./FID_IMAGES/"
-                        # filename = name
-                        # # Combine them to get the full path
-                        # full_path = os.path.join(base_folder, filename)
-
-                        # # Extract the folder path from the full path
-                        # folder_path = os.path.dirname(full_path)
-                        # if not os.path.exists(folder_path):
-                        #     os.makedirs(folder_path)
-
-                        # eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=50, timesteps = timesteps, folder_path=folder_path)
-                        # # eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=100, timesteps = timesteps, folder_path=folder_path)
-                        # session.log({f"fid {timesteps}": fid})
-                        # new_timesteps = int(timesteps / 2)
-                        # eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=50, timesteps = new_timesteps, folder_path=folder_path)
-                        # session.log({f"fid {new_timesteps}": fid})
                         
-                        eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=50)
-                        session.log({"fid (500)": fid})
-                        print(fid)
+
+                        # eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=500)
+                        # session.log({"fid (5000)": fid})
+                        # print(fid)
 
                         torch.save(self.model, f"./chkpts/{name}_{total_batches}.pth")
                         # self.save_checkpoint(chkpt_path, epoch=str(e+1) + "_"+ str(i))
