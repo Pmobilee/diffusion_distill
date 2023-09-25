@@ -140,7 +140,7 @@ class InceptionStatistics(nn.Module):
 PRE_COMPUTED_LIST = {
     # "cropped_celeba": "http://bioinf.jku.at/research/ttur/ttur_stats/fid_stats_celeba.npz",
     "cropped_celeba": "https://github.com/tqch/VAEGAN/releases/download/precomputed_statistics_celeba/fid_stats_celeba_148x148.npz",
-    # noqa
+    "lsun": "http://bioinf.jku.at/research/ttur/ttur_stats/fid_stats_lsun_church_64.npz",
     "lsun_bedroom": "http://bioinf.jku.at/research/ttur/ttur_stats/fid_stats_lsun_train.npz",
     "cifar10": "http://bioinf.jku.at/research/ttur/ttur_stats/fid_stats_cifar10_train.npz",
     "svhn": "http://bioinf.jku.at/research/ttur/ttur_stats/fid_stats_svhn_train.npz",

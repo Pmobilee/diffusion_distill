@@ -38,7 +38,7 @@ def wandb_image(x, name="sample"):
     img = make_grid(x, nrow=1, normalize=True, value_range=(-1., 1.))
     img = img.permute(1, 2, 0).cpu().numpy()
     # Convert the image data to uint8 format and scale it to [0, 255]
-    img = ((img + 1) * 0.5 * 255).astype(np.uint8)
+    img = ((img )  * 255).astype(np.uint8)
     # Create a PIL Image object
     img_pil = Image.fromarray(img)
     wandb_img = wandb.Image(img_pil)

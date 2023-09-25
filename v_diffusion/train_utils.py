@@ -361,9 +361,9 @@ class Trainer:
                         wandb_image(x, f"{timesteps}")
                         
 
-                        # eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=500)
-                        # session.log({"fid (5000)": fid})
-                        # print(fid)
+                        eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=500)
+                        session.log({"fid (5000)": fid})
+                        print(fid)
 
                         torch.save(self.model, f"./chkpts/{name}_{total_batches}.pth")
                         # self.save_checkpoint(chkpt_path, epoch=str(e+1) + "_"+ str(i))
