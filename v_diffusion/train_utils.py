@@ -350,7 +350,7 @@ class Trainer:
                         t.set_postfix(results)
                
                     
-                    if session != None and total_batches % 2500 == 0:
+                    if session != None and total_batches % 5000 == 0:
                     # if total_batches % 5000 == 0:
                    
                         
@@ -361,7 +361,7 @@ class Trainer:
                         wandb_image(x, f"{timesteps}")
                         
 
-                        eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=500)
+                        eval_results, fid = evaluator.eval(self.sample_fn, noises=noises, labels=labels, max_eval_count=5000)
                         session.log({"fid (500)": fid})
                         print(fid)
 
